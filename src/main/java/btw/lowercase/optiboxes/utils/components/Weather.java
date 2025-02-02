@@ -14,6 +14,6 @@ public enum Weather {
     public static final Codec<Weather> CODEC = Codec.STRING.xmap(Weather::byName, Weather::toString);
 
     public static Weather byName(String name) {
-        return Arrays.stream(Weather.values()).filter(weather -> weather.name().toLowerCase().equals(name)).findFirst().orElse(null);
+        return Arrays.stream(Weather.values()).filter(weather -> weather.toString().toLowerCase().equals(name)).findFirst().orElse(null);
     }
 }

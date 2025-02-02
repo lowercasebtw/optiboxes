@@ -66,6 +66,6 @@ public enum Blend {
     }
 
     public static Blend byName(String name) {
-        return Arrays.stream(Blend.values()).filter(blend -> blend.name().toLowerCase().equals(name)).findFirst().orElse(ADD);
+        return Arrays.stream(Blend.values()).filter(blend -> blend.toString().toLowerCase().equals(name)).findFirst().orElse(ADD);
     }
 }
