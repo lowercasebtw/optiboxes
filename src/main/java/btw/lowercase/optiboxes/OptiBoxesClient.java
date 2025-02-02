@@ -90,6 +90,7 @@ public class OptiBoxesClient implements ClientModInitializer {
                         }
 
                         if (name.equals("moon_phases") || name.equals("sun")) {
+                            // TODO/NOTE: Support moon/sun
                             this.logger.info("Skipping {}, moon_phases/sun aren't supported!", id);
                             return;
                         }

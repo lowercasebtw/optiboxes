@@ -15,14 +15,14 @@ public record Fade(int startFadeIn, int endFadeIn, int startFadeOut, int endFade
     ).apply(instance, Fade::new));
 
     public Fade(int startFadeIn, int endFadeIn, int startFadeOut, int endFadeOut, boolean alwaysOn) {
-        this.startFadeIn = normalizeAndWarnIfDifferent(startFadeIn, alwaysOn);
-        this.endFadeIn = normalizeAndWarnIfDifferent(endFadeIn, alwaysOn);
-        this.startFadeOut = normalizeAndWarnIfDifferent(startFadeOut, alwaysOn);
-        this.endFadeOut = normalizeAndWarnIfDifferent(endFadeOut, alwaysOn);
+        this.startFadeIn = normalizeIfNot(startFadeIn, alwaysOn);
+        this.endFadeIn = normalizeIfNot(endFadeIn, alwaysOn);
+        this.startFadeOut = normalizeIfNot(startFadeOut, alwaysOn);
+        this.endFadeOut = normalizeIfNot(endFadeOut, alwaysOn);
         this.alwaysOn = alwaysOn;
     }
 
-    private static int normalizeAndWarnIfDifferent(int time, boolean ignore) {
+    private static int normalizeIfNot(int time, boolean ignore) {
         return ignore ? time : CommonUtils.normalizeTickTime(time);
     }
 }

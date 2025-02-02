@@ -109,7 +109,7 @@ public class CommonUtils {
             String[] biomes = biomesString.split(" ");
             if (biomes.length > 0) {
                 JsonArray jsonBiomes = new JsonArray();
-                Arrays.stream(biomes).forEach(jsonBiomes::add);
+                Arrays.stream(biomes).filter(ResourceLocation::isValidPath).forEach(jsonBiomes::add);
                 jsonObject.add("biomes", jsonBiomes);
             }
         }
@@ -311,9 +311,7 @@ public class CommonUtils {
     public static boolean isInTimeInterval(int currentTime, int startTime, int endTime) {
         if (currentTime < 0 || currentTime >= 24000) {
             throw new RuntimeException("Invalid current time, value must be between 0-23999: " + currentTime);
-        }
-
-        if (startTime <= endTime) {
+        } else if (startTime <= endTime) {
             return currentTime >= startTime && currentTime <= endTime;
         } else {
             return currentTime >= startTime || currentTime <= endTime;

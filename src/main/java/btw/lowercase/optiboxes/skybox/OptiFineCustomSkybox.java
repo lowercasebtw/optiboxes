@@ -44,15 +44,6 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
         this.renderSky(skyRenderer, poseStack, tickDelta, camera, fogParameters, bufferSource);
     }
 
-    private void renderEndSky(PoseStack poseStack, SkyRenderer skyRenderer) {
-        RenderSystem.enableBlend();
-        RenderSystem.depthMask(false);
-        skyRenderer.renderEndSky();
-        this.render(poseStack, 0.0F);
-        RenderSystem.depthMask(true);
-        RenderSystem.disableBlend();
-    }
-
     // TODO: Move this to MixinLevelRenderer for other sky modifying support
     public void renderSky(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, Camera camera, FogParameters fogParameters, MultiBufferSource.BufferSource bufferSource) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -60,7 +51,12 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
 
         DimensionSpecialEffects effects = this.level.effects();
         if (effects.skyType() == DimensionSpecialEffects.SkyType.END) {
-            this.renderEndSky(poseStack, skyRenderer);
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
+            skyRenderer.renderEndSky();
+            this.render(poseStack, 0.0F);
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
             return;
         } else if (effects.skyType() != DimensionSpecialEffects.SkyType.OVERWORLD) {
             return;
