@@ -1,7 +1,6 @@
 package btw.lowercase.optiboxes.skybox;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -15,10 +14,9 @@ import java.util.Map;
 public class SkyboxManager {
     public static final SkyboxManager INSTANCE = new SkyboxManager();
 
-    private final List<ResourceLocation> preloadedTextures = new ArrayList<>();
     private final Map<ResourceLocation, OptiFineSkybox> skyboxMap = new Object2ObjectLinkedOpenHashMap<>();
-    private final Map<ResourceLocation, OptiFineSkybox> permanentSkyboxMap = new Object2ObjectLinkedOpenHashMap<>();
     private final List<OptiFineSkybox> activeSkyboxes = new LinkedList<>();
+    private final List<ResourceLocation> preloadedTextures = new ArrayList<>();
 
     public void addSkybox(ResourceLocation resourceLocation, OptiFineSkybox optiFineSkybox) {
         Preconditions.checkNotNull(resourceLocation, "Identifier was null");
@@ -34,12 +32,12 @@ public class SkyboxManager {
     }
 
     public void tick(ClientLevel level) {
-        for (OptiFineSkybox optiFineSkybox : Iterables.concat(this.skyboxMap.values(), this.permanentSkyboxMap.values())) {
+        for (OptiFineSkybox optiFineSkybox : this.skyboxMap.values()) {
             optiFineSkybox.tick(level);
         }
 
-        this.activeSkyboxes.removeIf(abstractSkybox -> !abstractSkybox.isActive());
-        for (OptiFineSkybox optiFineSkybox : Iterables.concat(this.skyboxMap.values(), this.permanentSkyboxMap.values())) {
+        this.activeSkyboxes.removeIf(optiFineSkybox -> !optiFineSkybox.isActive());
+        for (OptiFineSkybox optiFineSkybox : this.skyboxMap.values()) {
             if (!this.activeSkyboxes.contains(optiFineSkybox) && optiFineSkybox.isActive()) {
                 this.activeSkyboxes.add(optiFineSkybox);
             }
