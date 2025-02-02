@@ -8,58 +8,56 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 
 public enum Blend {
-    ALPHA("alpha", alpha -> {
+    ALPHA(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
     }),
-    ADD("add", alpha -> {
+    ADD(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
     }),
-    SUBTRACT("subtract", alpha -> {
+    SUBTRACT(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE_MINUS_DST_COLOR, GlStateManager.DestFactor.ZERO);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
     }),
-    MULTIPLY("multiply", alpha -> {
+    MULTIPLY(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.setShaderColor(alpha, alpha, alpha, alpha);
     }),
-    DODGE("dodge", alpha -> {
+    DODGE(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
     }),
-    BURN("burn", alpha -> {
+    BURN(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
     }),
-    SCREEN("screen", alpha -> {
+    SCREEN(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
     }),
-    OVERLAY("overlay", alpha -> {
+    OVERLAY(alpha -> {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.DST_COLOR, GlStateManager.DestFactor.SRC_COLOR);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
     }),
-    REPLACE("replace", alpha -> {
+    REPLACE(alpha -> {
         RenderSystem.disableBlend();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
     });
 
     public static final Codec<Blend> CODEC = Codec.STRING.xmap(Blend::byName, Blend::toString);
 
-    private final String name;
     private final Consumer<Float> blendFunc;
 
-    Blend(String name, Consumer<Float> blendFunc) {
-        this.name = name;
+    Blend(Consumer<Float> blendFunc) {
         this.blendFunc = blendFunc;
     }
 
@@ -68,11 +66,6 @@ public enum Blend {
     }
 
     public static Blend byName(String name) {
-        return Arrays.stream(Blend.values()).filter(blend -> blend.name.equals(name)).findFirst().orElse(ADD);
-    }
-
-    @Override
-    public String toString() {
-        return this.name;
+        return Arrays.stream(Blend.values()).filter(blend -> blend.name().toLowerCase().equals(name)).findFirst().orElse(ADD);
     }
 }
