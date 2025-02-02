@@ -224,11 +224,11 @@ public class CommonUtils {
         return result;
     }
 
-    public static List<Range> parseRangeEntries(String str) {
+    public static List<Range> parseRangeEntries(String source) {
         List<Range> rangeEntries = new ArrayList<>();
-        String[] strings = str.split(" ,");
-        for (String s : strings) {
-            Range range = parseRangeEntry(s);
+        String[] parts = source.trim().split(" ");
+        for (String part : parts) {
+            Range range = parseRangeEntry(part);
             if (range != null) {
                 rangeEntries.add(range);
             }
@@ -237,19 +237,19 @@ public class CommonUtils {
         return rangeEntries;
     }
 
-    private static Range parseRangeEntry(String str) {
-        if (str != null) {
-            if (str.contains("-")) {
-                String[] strings = str.split("-");
-                if (strings.length == 2) {
-                    int min = parseInt(strings[0], -1);
-                    int max = parseInt(strings[1], -1);
+    private static Range parseRangeEntry(String part) {
+        if (part != null) {
+            if (part.contains("-")) {
+                String[] parts = part.split("-");
+                if (parts.length == 2) {
+                    int min = parseInt(parts[0], -1);
+                    int max = parseInt(parts[1], -1);
                     if (min >= 0 && max >= 0) {
                         return new Range(min, max);
                     }
                 }
             } else {
-                int value = parseInt(str, -1);
+                int value = parseInt(part, -1);
                 if (value >= 0) {
                     return new Range(value, value);
                 }
@@ -259,11 +259,11 @@ public class CommonUtils {
         return null;
     }
 
-    public static List<Range> parseRangeEntriesNegative(String str) {
+    public static List<Range> parseRangeEntriesNegative(String source) {
         List<Range> rangeEntries = new ArrayList<>();
-        String[] strings = str.split(" ,");
-        for (String s : strings) {
-            Range range = parseRangeEntryNegative(s);
+        String[] parts = source.trim().split(" ");
+        for (String part : parts) {
+            Range range = parseRangeEntryNegative(part);
             if (range != null) {
                 rangeEntries.add(range);
             }
@@ -272,14 +272,14 @@ public class CommonUtils {
         return rangeEntries;
     }
 
-    private static Range parseRangeEntryNegative(String str) {
-        if (str != null) {
-            String s = OPTIFINE_RANGE_SEPARATOR.matcher(str).replaceAll("$1=$2");
+    private static Range parseRangeEntryNegative(String part) {
+        if (part != null) {
+            String s = OPTIFINE_RANGE_SEPARATOR.matcher(part).replaceAll("$1=$2");
             if (s.contains("=")) {
-                String[] strings = s.split("=");
-                if (strings.length == 2) {
-                    int j = parseInt(stripBrackets(strings[0]), Integer.MIN_VALUE);
-                    int k = parseInt(stripBrackets(strings[1]), Integer.MIN_VALUE);
+                String[] parts = s.split("=");
+                if (parts.length == 2) {
+                    int j = parseInt(stripBrackets(parts[0]), Integer.MIN_VALUE);
+                    int k = parseInt(stripBrackets(parts[1]), Integer.MIN_VALUE);
                     if (j != Integer.MIN_VALUE && k != Integer.MIN_VALUE) {
                         int min = Math.min(j, k);
                         int max = Math.max(j, k);
@@ -287,7 +287,7 @@ public class CommonUtils {
                     }
                 }
             } else {
-                int i = parseInt(stripBrackets(str), Integer.MIN_VALUE);
+                int i = parseInt(stripBrackets(part), Integer.MIN_VALUE);
                 if (i != Integer.MIN_VALUE) {
                     return new Range(i, i);
                 }
