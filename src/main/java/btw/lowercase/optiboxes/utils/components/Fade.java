@@ -5,6 +5,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 public record Fade(int startFadeIn, int endFadeIn, int startFadeOut, int endFadeOut, boolean alwaysOn) {
+    public static final Fade DEFAULT = new Fade(0, 0, 0, 0, true);
     public static final Codec<Fade> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.optionalFieldOf("startFadeIn", 0).forGetter(Fade::startFadeIn),
             Codec.INT.optionalFieldOf("endFadeIn", 0).forGetter(Fade::endFadeIn),

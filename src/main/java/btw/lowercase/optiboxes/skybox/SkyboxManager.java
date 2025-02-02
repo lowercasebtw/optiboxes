@@ -9,7 +9,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class SkyboxManager implements AbstractSkyboxManager {
     public static final SkyboxManager INSTANCE = new SkyboxManager();
@@ -46,9 +49,6 @@ public class SkyboxManager implements AbstractSkyboxManager {
                 this.activeAbstractSkyboxes.add(abstractSkybox);
             }
         }
-
-        // TODO/NOTE: Layer is always 0? Do I need "getLayer" anymore? Do I need this call anymore?
-        this.activeAbstractSkyboxes.sort(Comparator.comparingInt(AbstractSkybox::getLayer));
     }
 
     @Override

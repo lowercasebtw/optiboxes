@@ -67,14 +67,12 @@ public class CommonUtils {
 
         // Rotation
         if (properties.containsKey("rotate")) {
-            boolean rotate = Boolean.parseBoolean(properties.getProperty("rotate", "true"));
-            jsonObject.addProperty("rotate", rotate);
+            jsonObject.addProperty("rotate", Boolean.parseBoolean(properties.getProperty("rotate", "true")));
         }
 
         // Transition
         if (properties.containsKey("transition")) {
-            int transition = Integer.parseInt(properties.getProperty("transition", "1"));
-            jsonObject.addProperty("transition", transition);
+            jsonObject.addProperty("transition", Integer.parseInt(properties.getProperty("transition", "1")));
         }
 
         // Axis
