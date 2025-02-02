@@ -88,7 +88,7 @@ public class OptiFineSkyLayer {
             this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
-                float angle = getAngle(level, skyAngle);
+                float angle = this.getAngle(level, skyAngle);
                 Quaternionf rotation = new Quaternionf();
                 rotation.rotationAxis(angle, this.axis);
                 poseStack.mulPose(rotation);
@@ -142,7 +142,7 @@ public class OptiFineSkyLayer {
             angleDayStart = (float) (currentAngle % 1.0D);
         }
 
-        return (-360.0F * (angleDayStart + skyAngle * this.speed)) * (float) Math.PI / 180.0F;
+        return (360.0F * (angleDayStart + skyAngle * this.speed)) * (float) Math.PI / 180.0F;
     }
 
     private boolean getConditionCheck(Level level) {

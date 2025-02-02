@@ -106,18 +106,15 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             poseStack.pushPose();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             this.render(poseStack, tickDelta);
-            poseStack.mulPose(Axis.XP.rotationDegrees(timeOfDay * 360.0F)); // TODO/NOTE: Might not be needed?
             poseStack.popPose();
+
+            skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, this.level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
+            bufferSource.endBatch();
+
+            RenderSystem.disableBlend();
+            RenderSystem.defaultBlendFunc();
         }
-
-        skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, this.level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
-        bufferSource.endBatch();
-
-        // Undoing this because of the OptiFine Sky Rendering Code Prior
-        RenderSystem.disableBlend();
-        RenderSystem.defaultBlendFunc();
 
         // Dark Disc
         if (this.shouldRenderDarkDisc(minecraft, tickDelta)) {
