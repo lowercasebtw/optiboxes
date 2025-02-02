@@ -196,6 +196,11 @@ public class CommonUtils {
             return null;
         }
 
+        try {
+            textureInputStream.close();
+        } catch (Exception ignored) {
+        }
+
         return textureId;
     }
 
