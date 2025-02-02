@@ -45,7 +45,6 @@ public class OptiBoxesClient implements ClientModInitializer {
     }
 
     public void inject(OptiFineResourceHelper managerAccessor) {
-        this.logger.warn("OptiBoxes is converting MCPatcher/OptiFine custom skies resource packs! Any visual bugs are likely caused by OptiBoxes. Please do not report these issues to Resource Pack creators!");
         SkyboxManager.INSTANCE.clearSkyboxes();
         if (OptiBoxesConfig.instance().enabled) {
             this.logger.info("Looking for OptiFine/MCPatcher Skies...");

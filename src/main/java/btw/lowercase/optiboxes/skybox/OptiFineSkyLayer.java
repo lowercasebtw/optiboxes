@@ -210,8 +210,8 @@ public class OptiFineSkyLayer {
         }
     }
 
-    public boolean isActive(int timeOfDay) {
-        if (!this.fade.alwaysOn() && CommonUtils.isInTimeInterval(timeOfDay, this.fade.endFadeOut(), this.fade.startFadeIn())) {
+    public boolean isActive(int timeOfDay, int clampedTimeOfDay) {
+        if (!this.fade.alwaysOn() && CommonUtils.isInTimeInterval(clampedTimeOfDay, this.fade.endFadeOut(), this.fade.startFadeIn())) {
             return false;
         } else {
             if (this.loop.ranges() != null) {
