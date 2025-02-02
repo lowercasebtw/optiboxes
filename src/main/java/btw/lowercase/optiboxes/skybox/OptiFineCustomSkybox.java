@@ -152,7 +152,7 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
             }
         }
 
-        Blend.ADD.getBlendFunc().accept(1.0F - rainLevel);
+        Blend.ADD.apply(1.0F - rainLevel);
     }
 
     @Override

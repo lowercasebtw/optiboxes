@@ -61,8 +61,8 @@ public enum Blend {
         this.blendFunc = blendFunc;
     }
 
-    public Consumer<Float> getBlendFunc() {
-        return this.blendFunc;
+    public void apply(float value) {
+        this.blendFunc.accept(value);
     }
 
     public static Blend byName(String name) {

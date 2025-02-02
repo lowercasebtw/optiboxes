@@ -59,6 +59,7 @@ public class SkyboxManager implements AbstractSkyboxManager {
             }
         }
 
+        // TODO/NOTE: Layer is always 0? Do I need "getLayer" anymore? Do I need this call anymore?
         this.activeAbstractSkyboxes.sort(Comparator.comparingInt(AbstractSkybox::getLayer));
     }
 

@@ -87,7 +87,7 @@ public class OptiFineSkyLayer {
         float finalAlpha = Mth.clamp(this.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
         if (!(finalAlpha < 1.0E-4F)) {
             RenderSystem.setShaderTexture(0, this.source);
-            this.blend.getBlendFunc().accept(finalAlpha);
+            this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
                 float angle = getAngle(level, skyAngle);

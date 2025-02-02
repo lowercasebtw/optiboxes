@@ -16,9 +16,9 @@ import java.util.regex.Pattern;
 public class CommonUtils {
     private static final Pattern OPTIFINE_RANGE_SEPARATOR = Pattern.compile("(\\d|\\))-(\\d|\\()");
 
-    public static JsonObject convertOptiFineSkyProperties(OptiFineResourceManagerHelper optiFineResourceManagerHelper, Properties properties, ResourceLocation propertiesResourceLocation) {
+    public static JsonObject convertOptiFineSkyProperties(OptiFineResourceHelper optiFineResourceHelper, Properties properties, ResourceLocation propertiesResourceLocation) {
         JsonObject jsonObject = new JsonObject();
-        ResourceLocation sourceTexture = parseSourceTexture(properties.getProperty("source", null), optiFineResourceManagerHelper, propertiesResourceLocation);
+        ResourceLocation sourceTexture = parseSourceTexture(properties.getProperty("source", null), optiFineResourceHelper, propertiesResourceLocation);
         if (sourceTexture == null) {
             return null;
         } else {
@@ -158,7 +158,7 @@ public class CommonUtils {
         return jsonObject;
     }
 
-    public static ResourceLocation parseSourceTexture(String source, OptiFineResourceManagerHelper optiFineResourceManagerHelper, ResourceLocation propertiesId) {
+    public static ResourceLocation parseSourceTexture(String source, OptiFineResourceHelper optiFineResourceHelper, ResourceLocation propertiesId) {
         ResourceLocation textureId;
         String namespace;
         String path;
@@ -193,7 +193,7 @@ public class CommonUtils {
             return null;
         }
 
-        InputStream textureInputStream = optiFineResourceManagerHelper.getInputStream(textureId);
+        InputStream textureInputStream = optiFineResourceHelper.getInputStream(textureId);
         if (textureInputStream == null) {
             return null;
         }

@@ -13,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
-public class OptiFineResourceManagerHelper implements IdentifiableResourceReloadListener {
+public class OptiFineResourceHelper implements IdentifiableResourceReloadListener {
     private ResourceManager resourceManager;
 
     @Override

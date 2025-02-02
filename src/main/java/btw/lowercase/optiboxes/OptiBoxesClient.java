@@ -4,7 +4,7 @@ import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.skybox.OptiFineCustomSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
-import btw.lowercase.optiboxes.utils.OptiFineResourceManagerHelper;
+import btw.lowercase.optiboxes.utils.OptiFineResourceHelper;
 import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -40,11 +40,11 @@ public class OptiBoxesClient implements ClientModInitializer {
     public void onInitializeClient() {
         INSTANCE = this;
         OptiBoxesConfig.load();
-        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new OptiFineResourceManagerHelper());
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new OptiFineResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
     }
 
-    public void inject(OptiFineResourceManagerHelper managerAccessor) {
+    public void inject(OptiFineResourceHelper managerAccessor) {
         this.logger.warn("OptiBoxes is converting MCPatcher/OptiFine custom skies resource packs! Any visual bugs are likely caused by OptiBoxes. Please do not report these issues to Resource Pack creators!");
         SkyboxManager.INSTANCE.clearSkyboxes();
         if (OptiBoxesConfig.instance().enabled) {
@@ -53,7 +53,7 @@ public class OptiBoxesClient implements ClientModInitializer {
         }
     }
 
-    public void convert(OptiFineResourceManagerHelper managerAccessor) {
+    public void convert(OptiFineResourceHelper managerAccessor) {
         if (OptiBoxesConfig.instance().processOptiFine) {
             this.convertNamespace(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
@@ -63,10 +63,10 @@ public class OptiBoxesClient implements ClientModInitializer {
         }
     }
 
-    private void convertNamespace(OptiFineResourceManagerHelper optiFineResourceManagerHelper, String skyParent, Pattern skyPattern) {
+    private void convertNamespace(OptiFineResourceHelper optiFineResourceHelper, String skyParent, Pattern skyPattern) {
         final JsonArray overworldLayers = new JsonArray();
         final JsonArray endLayers = new JsonArray();
-        optiFineResourceManagerHelper.searchIn(skyParent)
+        optiFineResourceHelper.searchIn(skyParent)
                 .filter(id -> id.getPath().endsWith(".properties"))
                 .sorted(Comparator.comparing(ResourceLocation::getPath, (id1, id2) -> {
                     Matcher matcherId1 = skyPattern.matcher(id1);
@@ -94,7 +94,7 @@ public class OptiBoxesClient implements ClientModInitializer {
                             return;
                         }
 
-                        InputStream inputStream = optiFineResourceManagerHelper.getInputStream(id);
+                        InputStream inputStream = optiFineResourceHelper.getInputStream(id);
                         if (inputStream == null) {
                             this.logger.error("Error trying to read namespaced identifier: {}", id);
                             return;
@@ -114,7 +114,7 @@ public class OptiBoxesClient implements ClientModInitializer {
                             }
                         }
 
-                        JsonObject json = CommonUtils.convertOptiFineSkyProperties(optiFineResourceManagerHelper, properties, id);
+                        JsonObject json = CommonUtils.convertOptiFineSkyProperties(optiFineResourceHelper, properties, id);
                         if (json != null) {
                             if (world.equals("world0")) {
                                 overworldLayers.add(json);

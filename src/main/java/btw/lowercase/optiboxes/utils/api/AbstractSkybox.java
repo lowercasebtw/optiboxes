@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SkyRenderer;
 
 public interface AbstractSkybox {
+    // TODO/NOTE: Not needed anymore?
     default int getLayer() {
         return 0;
     }
