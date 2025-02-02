@@ -4,14 +4,9 @@ import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import btw.lowercase.optiboxes.utils.api.AbstractSkyboxManager;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.FogParameters;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
@@ -37,13 +32,6 @@ public class SkyboxManager implements AbstractSkyboxManager {
         this.activeAbstractSkyboxes.clear();
         this.preloadedTextures.forEach(Minecraft.getInstance().getTextureManager()::release);
         this.preloadedTextures.clear();
-    }
-
-    @Override
-    public void renderSkyboxes(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, Camera camera, MultiBufferSource.BufferSource bufferSource, FogParameters fogParameters) {
-        for (AbstractSkybox abstractSkybox : this.activeAbstractSkyboxes) {
-            abstractSkybox.render(skyRenderer, poseStack, tickDelta, camera, bufferSource, fogParameters);
-        }
     }
 
     @Override
