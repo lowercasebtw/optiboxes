@@ -1,7 +1,11 @@
 {
 	"options.optiboxes.title": "OptiBoxes Configuration",
+	"options.optiboxes.enabled": "Enabled",
+	"options.optiboxes.enabled.tooltip": "Enable/disable the mod.",
 	"options.optiboxes.process_optifine": "Process OptiFine",
 	"options.optiboxes.process_optifine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
 	"options.optiboxes.process_mcpatcher": "Process MCPatcher",
-	"options.optiboxes.process_mcpatcher.tooltip": "If enabled, the mod will attempt to read/load MCPatcher Custom Skies."
+	"options.optiboxes.process_mcpatcher.tooltip": "If enabled, the mod will attempt to read/load MCPatcher Custom Skies.",
+	"options.optiboxes.use_new_sunrise_rendering": "Use New Sunrise/Sunset Rendering",
+	"options.optiboxes.use_new_sunrise_rendering.tooltip": "Debug setting to enable/disable modern sunrise/sunset sky rendering."
 }

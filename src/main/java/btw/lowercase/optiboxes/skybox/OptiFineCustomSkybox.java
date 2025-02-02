@@ -1,5 +1,6 @@
 package btw.lowercase.optiboxes.skybox;
 
+import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import btw.lowercase.optiboxes.utils.components.Blend;
 import com.google.common.collect.ImmutableList;
@@ -81,7 +82,7 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
         // Sunrise/Sunset
         if (effects.isSunriseOrSunset(timeOfDay)) {
             int sunriseOrSunsetColor = effects.getSunriseOrSunsetColor(timeOfDay);
-            if (this.level.isRaining() || this.level.isThundering()) {
+            if (OptiBoxesConfig.instance().useNewSunriseRendering || this.level.isRaining() || this.level.isThundering()) {
                 // TODO/NOTE: Fix for broken sky when raining/thundering?
                 skyRenderer.renderSunriseAndSunset(poseStack, bufferSource, sunAngle, sunriseOrSunsetColor);
             } else {

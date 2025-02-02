@@ -17,7 +17,7 @@
 			"btw.lowercase.optiboxes.OptiBoxesClient"
 		],
 		"modmenu": [
-			"btw.lowercase.optiboxes.ModMenuIntegration"
+			"btw.lowercase.optiboxes.config.ModMenuIntegration"
 		]
 	},
 	"mixins": [

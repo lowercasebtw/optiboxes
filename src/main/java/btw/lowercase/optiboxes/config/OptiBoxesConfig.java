@@ -1,63 +1,83 @@
 package btw.lowercase.optiboxes.config;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import btw.lowercase.optiboxes.OptiBoxesClient;
+import dev.isxander.yacl3.api.ConfigCategory;
+import dev.isxander.yacl3.api.Option;
+import dev.isxander.yacl3.api.OptionDescription;
+import dev.isxander.yacl3.api.YetAnotherConfigLib;
+import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
+import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
+import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
 import net.fabricmc.loader.api.FabricLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.reflect.Modifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 
 public class OptiBoxesConfig {
-    private static final Logger logger = LoggerFactory.getLogger("OptiBoxes Config");
-    private static final Gson GSON = new GsonBuilder()
-            .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
-            .setPrettyPrinting()
-            .excludeFieldsWithModifiers(Modifier.PRIVATE)
-            .create();
+    private static final ConfigClassHandler<OptiBoxesConfig> CONFIG =
+            ConfigClassHandler.createBuilder(OptiBoxesConfig.class)
+                    .serializer(config ->
+                            GsonConfigSerializerBuilder.create(config)
+                                    .setPath(FabricLoader.getInstance().getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
+                                    .build()
+                    ).build();
 
-    public static final OptiBoxesConfig INSTANCE = load(FabricLoader.getInstance().getConfigDir().resolve("optiboxes.json").toFile());
+    public boolean enabled = true;
     public boolean processOptiFine = true;
     public boolean processMCPatcher = false;
-    private File file;
+    public boolean useNewSunriseRendering = false;
 
-    public static OptiBoxesConfig load(File file) {
-        OptiBoxesConfig config;
-        if (file.exists()) {
-            try (FileReader reader = new FileReader(file)) {
-                config = GSON.fromJson(reader, OptiBoxesConfig.class);
-            } catch (Exception e) {
-                logger.error("Could not parse config, falling back to defaults!", e);
-                config = new OptiBoxesConfig();
-            }
-        } else {
-            config = new OptiBoxesConfig();
-        }
+    public static Screen getConfigScreen(Screen parent) {
+        return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
+            builder.title(Component.translatable("options.optiboxes.title"));
 
-        config.file = file;
-        config.writeChanges();
-        return config;
+            ConfigCategory.Builder category = ConfigCategory.createBuilder();
+            category.name(Component.translatable("options.optiboxes.title"));
+            Minecraft minecraft = Minecraft.getInstance();
+            category.option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("options.optiboxes.enabled"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.enabled.tooltip")))
+                    .binding(defaults.enabled, () -> config.enabled, (newVal) -> {
+                        config.enabled = newVal;
+                        minecraft.reloadResourcePacks();
+                    })
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            category.option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("options.optiboxes.process_optifine"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.process_optifine.tooltip")))
+                    .binding(defaults.processOptiFine, () -> config.processOptiFine, (newVal) -> {
+                        config.processOptiFine = newVal;
+                        minecraft.reloadResourcePacks();
+                    })
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            category.option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("options.optiboxes.process_mcpatcher"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.process_mcpatcher.tooltip")))
+                    .binding(defaults.processMCPatcher, () -> config.processMCPatcher, (newVal) -> {
+                        config.processMCPatcher = newVal;
+                        minecraft.reloadResourcePacks();
+                    })
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            category.option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("options.optiboxes.use_new_sunrise_rendering"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.use_new_sunrise_rendering.tooltip")))
+                    .binding(defaults.useNewSunriseRendering, () -> config.useNewSunriseRendering, (newVal) -> config.useNewSunriseRendering = newVal)
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            builder.category(category.build());
+
+            return builder;
+        }).generateScreen(parent);
     }
 
-    public void writeChanges() {
-        File dir = this.file.getParentFile();
-        if (!dir.exists()) {
-            if (!dir.mkdirs()) {
-                throw new RuntimeException("Could not create parent directories");
-            }
-        } else if (!dir.isDirectory()) {
-            throw new RuntimeException("The parent file is not a directory");
-        }
+    public static void load() {
+        CONFIG.load();
+    }
 
-        try (FileWriter writer = new FileWriter(this.file)) {
-            GSON.toJson(this, writer);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not save configuration file", e);
-        }
+    public static OptiBoxesConfig instance() {
+        return CONFIG.instance();
     }
 }

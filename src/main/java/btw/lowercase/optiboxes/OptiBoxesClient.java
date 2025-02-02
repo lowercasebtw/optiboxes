@@ -1,11 +1,11 @@
 package btw.lowercase.optiboxes;
 
-import btw.lowercase.optiboxes.skybox.SkyboxManager;
-import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.skybox.OptiFineCustomSkybox;
-import btw.lowercase.optiboxes.utils.OptiFineResourceManagerHelper;
+import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
+import btw.lowercase.optiboxes.utils.OptiFineResourceManagerHelper;
+import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -39,6 +39,7 @@ public class OptiBoxesClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
+        OptiBoxesConfig.load();
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new OptiFineResourceManagerHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
     }
@@ -46,16 +47,18 @@ public class OptiBoxesClient implements ClientModInitializer {
     public void inject(OptiFineResourceManagerHelper managerAccessor) {
         this.logger.warn("OptiBoxes is converting MCPatcher/OptiFine custom skies resource packs! Any visual bugs are likely caused by OptiBoxes. Please do not report these issues to Resource Pack creators!");
         SkyboxManager.INSTANCE.clearSkyboxes();
-        this.logger.info("Looking for OptiFine/MCPatcher Skies...");
-        this.convert(managerAccessor);
+        if (OptiBoxesConfig.instance().enabled) {
+            this.logger.info("Looking for OptiFine/MCPatcher Skies...");
+            this.convert(managerAccessor);
+        }
     }
 
     public void convert(OptiFineResourceManagerHelper managerAccessor) {
-        if (OptiBoxesConfig.INSTANCE.processOptiFine) {
+        if (OptiBoxesConfig.instance().processOptiFine) {
             this.convertNamespace(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
 
-        if (OptiBoxesConfig.INSTANCE.processMCPatcher) {
+        if (OptiBoxesConfig.instance().processMCPatcher) {
             this.convertNamespace(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
         }
     }
