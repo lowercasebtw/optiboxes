@@ -7,8 +7,9 @@ import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
+import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
-import net.fabricmc.loader.api.FabricLoader;
+import dev.isxander.yacl3.platform.YACLPlatform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -18,14 +19,14 @@ public class OptiBoxesConfig {
             ConfigClassHandler.createBuilder(OptiBoxesConfig.class)
                     .serializer(config ->
                             GsonConfigSerializerBuilder.create(config)
-                                    .setPath(FabricLoader.getInstance().getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
+                                    .setPath(YACLPlatform.getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
                                     .build()
                     ).build();
 
-    public boolean enabled = true;
-    public boolean processOptiFine = true;
-    public boolean processMCPatcher = false;
-    public boolean useNewSunriseRendering = false;
+    @SerialEntry public boolean enabled = true;
+    @SerialEntry public boolean processOptiFine = true;
+    @SerialEntry public boolean processMCPatcher = false;
+    @SerialEntry public boolean useNewSunriseRendering = false;
 
     public static Screen getConfigScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
