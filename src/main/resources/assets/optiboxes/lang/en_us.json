@@ -6,6 +6,8 @@
 	"options.optiboxes.process_optifine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
 	"options.optiboxes.process_mcpatcher": "Process MCPatcher",
 	"options.optiboxes.process_mcpatcher.tooltip": "If enabled, the mod will attempt to read/load MCPatcher Custom Skies.",
+	"options.optiboxes.render_sun_moon_stars": "Render Sun/Moon/Stars",
+	"options.optiboxes.render_sun_moon_stars.tooltip": "Enable/disable rendering of the sun, moon, and stars.",
 	"options.optiboxes.use_new_sunrise_rendering": "Use New Sunrise/Sunset Rendering",
 	"options.optiboxes.use_new_sunrise_rendering.tooltip": "Debug setting to enable/disable modern sunrise/sunset sky rendering."
 }

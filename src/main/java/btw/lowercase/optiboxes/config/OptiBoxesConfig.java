@@ -23,10 +23,16 @@ public class OptiBoxesConfig {
                                     .build()
                     ).build();
 
-    @SerialEntry public boolean enabled = true;
-    @SerialEntry public boolean processOptiFine = true;
-    @SerialEntry public boolean processMCPatcher = false;
-    @SerialEntry public boolean useNewSunriseRendering = false;
+    @SerialEntry
+    public boolean enabled = true;
+    @SerialEntry
+    public boolean processOptiFine = true;
+    @SerialEntry
+    public boolean processMCPatcher = false;
+    @SerialEntry
+    public boolean renderSunMoonStars = true;
+    @SerialEntry
+    public boolean useNewSunriseRendering = false;
 
     public static Screen getConfigScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
@@ -60,6 +66,12 @@ public class OptiBoxesConfig {
                         config.processMCPatcher = newVal;
                         minecraft.reloadResourcePacks();
                     })
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            category.option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("options.optiboxes.render_sun_moon_stars"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.render_sun_moon_stars.tooltip")))
+                    .binding(defaults.renderSunMoonStars, () -> config.renderSunMoonStars, (newVal) -> config.renderSunMoonStars = newVal)
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             category.option(Option.<Boolean>createBuilder()

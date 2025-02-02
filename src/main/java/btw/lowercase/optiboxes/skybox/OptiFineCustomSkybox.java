@@ -108,10 +108,10 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel);
             this.render(poseStack, tickDelta);
             poseStack.popPose();
-
-            skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, this.level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
+            if (OptiBoxesConfig.instance().renderSunMoonStars) {
+                skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, this.level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
+            }
             bufferSource.endBatch();
-
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
         }
