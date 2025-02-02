@@ -1,0 +1,7 @@
+{
+	"options.optiboxes.title": "OptiBoxes Configuration",
+	"options.optiboxes.process_optifine": "Process OptiFine",
+	"options.optiboxes.process_optifine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
+	"options.optiboxes.process_mcpatcher": "Process MCPatcher",
+	"options.optiboxes.process_mcpatcher.tooltip": "If enabled, the mod will attempt to read/load MCPatcher Custom Skies."
+}

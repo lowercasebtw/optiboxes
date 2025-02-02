@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"id": "optiboxes",
+	"version": "${version}",
+	"name": "OptiBoxes",
+	"description": "Skybox mod made for OptiFine skybox packs.",
+	"authors": [
+		"FlashyReese",
+		"AMereBagatelle",
+		"lowercasebtw"
+	],
+	"icon": "assets/optiboxes/icon.png",
+	"license": "GPL-3.0",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"btw.lowercase.optiboxes.OptiBoxesClient"
+		],
+		"modmenu": [
+			"btw.lowercase.optiboxes.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"optiboxes.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.10",
+		"minecraft": ">=1.21.4 <1.21.5"
+	}
+}
