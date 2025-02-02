@@ -137,7 +137,7 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
     }
 
     private void render(PoseStack poseStack, float tickDelta) {
-        int timeOfDay = (int) (this.level.getTimeOfDay(tickDelta) % 24000L);
+        int timeOfDay = (int) (this.level.getDayTime() % 24000L);
         float skyAngle = this.level.getTimeOfDay(tickDelta);
         float rainLevel = this.level.getRainLevel(tickDelta);
         float thunderLevel = this.level.getThunderLevel(tickDelta);
