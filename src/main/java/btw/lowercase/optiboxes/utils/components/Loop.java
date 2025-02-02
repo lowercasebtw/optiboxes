@@ -1,9 +1,9 @@
 package btw.lowercase.optiboxes.utils.components;
 
+import btw.lowercase.optiboxes.utils.CommonUtils;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import btw.lowercase.optiboxes.utils.CommonUtils;
 
 import java.util.List;
 

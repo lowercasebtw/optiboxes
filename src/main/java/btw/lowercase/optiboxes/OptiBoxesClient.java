@@ -1,11 +1,10 @@
 package btw.lowercase.optiboxes;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
-import btw.lowercase.optiboxes.skybox.OptiFineCustomSkybox;
+import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.OptiFineResourceHelper;
-import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -129,16 +128,16 @@ public class OptiBoxesClient implements ClientModInitializer {
             JsonObject overworldJson = new JsonObject();
             overworldJson.add("layers", overworldLayers);
             overworldJson.addProperty("world", "minecraft:overworld");
-            AbstractSkybox abstractSkybox = OptiFineCustomSkybox.CODEC.decode(JsonOps.INSTANCE, overworldJson).getOrThrow().getFirst();
-            SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-overworld"), abstractSkybox);
+            OptiFineSkybox optiFineSkybox = OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, overworldJson).getOrThrow().getFirst();
+            SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-overworld"), optiFineSkybox);
         }
 
         if (!endLayers.isEmpty()) {
             JsonObject endJson = new JsonObject();
             endJson.add("layers", endLayers);
             endJson.addProperty("world", "minecraft:the_end");
-            AbstractSkybox abstractSkybox = OptiFineCustomSkybox.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst();
-            SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-end"), abstractSkybox);
+            OptiFineSkybox optiFineSkybox = OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst();
+            SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-end"), optiFineSkybox);
         }
     }
 }

@@ -1,7 +1,6 @@
 package btw.lowercase.optiboxes.skybox;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
-import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import btw.lowercase.optiboxes.utils.components.Blend;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -22,23 +21,22 @@ import org.joml.Matrix4f;
 
 import java.util.List;
 
-public class OptiFineCustomSkybox implements AbstractSkybox {
-    public static final Codec<OptiFineCustomSkybox> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            OptiFineSkyLayer.CODEC.listOf().optionalFieldOf("layers", ImmutableList.of()).forGetter(OptiFineCustomSkybox::getLayers),
-            Level.RESOURCE_KEY_CODEC.fieldOf("world").forGetter(OptiFineCustomSkybox::getWorldResourceKey)
-    ).apply(instance, OptiFineCustomSkybox::new));
+public class OptiFineSkybox {
+    public static final Codec<OptiFineSkybox> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            OptiFineSkyLayer.CODEC.listOf().optionalFieldOf("layers", ImmutableList.of()).forGetter(OptiFineSkybox::getLayers),
+            Level.RESOURCE_KEY_CODEC.fieldOf("world").forGetter(OptiFineSkybox::getWorldResourceKey)
+    ).apply(instance, OptiFineSkybox::new));
 
     private final List<OptiFineSkyLayer> layers;
     private final ResourceKey<Level> worldResourceKey;
     private ClientLevel level = Minecraft.getInstance().level;
     private boolean active = true;
 
-    public OptiFineCustomSkybox(List<OptiFineSkyLayer> layers, ResourceKey<Level> worldResourceKey) {
+    public OptiFineSkybox(List<OptiFineSkyLayer> layers, ResourceKey<Level> worldResourceKey) {
         this.layers = layers;
         this.worldResourceKey = worldResourceKey;
     }
 
-    @Override
     public void render(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, Camera camera, MultiBufferSource.BufferSource bufferSource, FogParameters fogParameters) {
         this.level = (ClientLevel) camera.getEntity().getCommandSenderWorld();
         this.renderSky(skyRenderer, poseStack, tickDelta, camera, fogParameters, bufferSource);
@@ -105,7 +103,7 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
         {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             poseStack.pushPose();
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel); // TODO/NOTE: needed?
             this.render(poseStack, tickDelta);
             poseStack.popPose();
             if (OptiBoxesConfig.instance().renderSunMoonStars) {
@@ -149,7 +147,6 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
         Blend.ADD.apply(1.0F - rainLevel);
     }
 
-    @Override
     public void tick(ClientLevel level) {
         this.active = true;
         if (!level.dimension().equals(this.worldResourceKey)) {
@@ -160,7 +157,6 @@ public class OptiFineCustomSkybox implements AbstractSkybox {
         }
     }
 
-    @Override
     public boolean isActive() {
         return this.active;
     }

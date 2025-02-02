@@ -16,21 +16,23 @@ import net.minecraft.network.chat.Component;
 
 public class OptiBoxesConfig {
     private static final ConfigClassHandler<OptiBoxesConfig> CONFIG =
-            ConfigClassHandler.createBuilder(OptiBoxesConfig.class)
-                    .serializer(config ->
-                            GsonConfigSerializerBuilder.create(config)
-                                    .setPath(YACLPlatform.getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
-                                    .build()
-                    ).build();
+            ConfigClassHandler.createBuilder(OptiBoxesConfig.class).serializer(config ->
+                    GsonConfigSerializerBuilder.create(config)
+                            .setPath(YACLPlatform.getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
+                            .build()).build();
 
     @SerialEntry
     public boolean enabled = true;
+
     @SerialEntry
     public boolean processOptiFine = true;
+
     @SerialEntry
     public boolean processMCPatcher = false;
+
     @SerialEntry
     public boolean renderSunMoonStars = true;
+
     @SerialEntry
     public boolean useNewSunriseRendering = false;
 

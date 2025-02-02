@@ -1,8 +1,8 @@
 package btw.lowercase.optiboxes.mixins;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
+import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
-import btw.lowercase.optiboxes.utils.api.AbstractSkybox;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -28,10 +28,10 @@ public abstract class MixinLevelRenderer {
 
     @Inject(method = "method_62215", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderFog(Lnet/minecraft/client/renderer/FogParameters;)V", shift = At.Shift.AFTER), cancellable = true)
     private void optiboxes$renderSkyboxes(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
-        List<AbstractSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
+        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         if (OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty()) {
-            for (AbstractSkybox abstractSkybox : activeSkyboxes) {
-                abstractSkybox.render(
+            for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
+                optiFineSkybox.render(
                         this.skyRenderer,
                         new PoseStack(),
                         tickDelta,
