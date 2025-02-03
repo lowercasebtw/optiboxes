@@ -45,23 +45,19 @@ public class OptiFineSkybox {
     }
 
     public void renderOverworldSky(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, ClientLevel level, Vec3 cameraPosition, MultiBufferSource.BufferSource bufferSource, FogParameters fogParameters) {
-        int skyColor = level.getSkyColor(cameraPosition, tickDelta);
-        float skyRed = ARGB.redFloat(skyColor);
-        float skyGreen = ARGB.greenFloat(skyColor);
-        float skyBlue = ARGB.blueFloat(skyColor);
-        float sunAngle = level.getSunAngle(tickDelta);
-        float timeOfDay = level.getTimeOfDay(tickDelta);
-        float rainLevel = 1.0F - level.getRainLevel(tickDelta);
-        float starBrightness = level.getStarBrightness(tickDelta) * rainLevel;
-
         RenderSystem.enableBlend();
         RenderSystem.depthMask(false);
-        skyRenderer.renderSkyDisc(skyRed, skyGreen, skyBlue);
+
+        int skyColor = level.getSkyColor(cameraPosition, tickDelta);
+        skyRenderer.renderSkyDisc(ARGB.redFloat(skyColor), ARGB.greenFloat(skyColor), ARGB.blueFloat(skyColor));
 
         // Sunrise/Sunset
+        float timeOfDay = level.getTimeOfDay(tickDelta);
         DimensionSpecialEffects effects = level.effects();
         if (effects.isSunriseOrSunset(timeOfDay)) {
-            skyRenderer.renderSunriseAndSunset(poseStack, bufferSource, sunAngle, effects.getSunriseOrSunsetColor(timeOfDay));
+            float sunAngle = level.getSunAngle(tickDelta);
+            int sunriseOrSunsetColor = effects.getSunriseOrSunsetColor(timeOfDay);
+            skyRenderer.renderSunriseAndSunset(poseStack, bufferSource, sunAngle, sunriseOrSunsetColor);
             bufferSource.endBatch();
         }
 
@@ -69,6 +65,8 @@ public class OptiFineSkybox {
         {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             poseStack.pushPose();
+            float rainLevel = 1.0F - level.getRainLevel(tickDelta);
+            float starBrightness = level.getStarBrightness(tickDelta) * rainLevel;
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel); // TODO/NOTE: needed?
             this.render(poseStack, level, tickDelta);
             poseStack.popPose();
@@ -82,7 +80,6 @@ public class OptiFineSkybox {
             skyRenderer.renderDarkDisc(poseStack);
         }
 
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.depthMask(true);
     }
 
