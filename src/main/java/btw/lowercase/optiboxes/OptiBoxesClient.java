@@ -43,25 +43,17 @@ public class OptiBoxesClient implements ClientModInitializer {
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
     }
 
-    public void inject(OptiFineResourceHelper managerAccessor) {
-        SkyboxManager.INSTANCE.clearSkyboxes();
-        if (OptiBoxesConfig.instance().enabled) {
-            this.logger.info("Looking for OptiFine/MCPatcher Skies...");
-            this.convert(managerAccessor);
-        }
-    }
-
     public void convert(OptiFineResourceHelper managerAccessor) {
         if (OptiBoxesConfig.instance().processOptiFine) {
-            this.convertNamespace(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
+            this.parseSkyboxes(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
 
         if (OptiBoxesConfig.instance().processMCPatcher) {
-            this.convertNamespace(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
+            this.parseSkyboxes(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
         }
     }
 
-    private void convertNamespace(OptiFineResourceHelper optiFineResourceHelper, String skyParent, Pattern skyPattern) {
+    private void parseSkyboxes(OptiFineResourceHelper optiFineResourceHelper, String skyParent, Pattern skyPattern) {
         final JsonArray overworldLayers = new JsonArray();
         final JsonArray endLayers = new JsonArray();
         optiFineResourceHelper.searchIn(skyParent)
@@ -139,5 +131,9 @@ public class OptiBoxesClient implements ClientModInitializer {
             OptiFineSkybox optiFineSkybox = OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst();
             SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-end"), optiFineSkybox);
         }
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 }

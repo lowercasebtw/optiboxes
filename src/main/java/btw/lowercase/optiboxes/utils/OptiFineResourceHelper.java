@@ -1,6 +1,8 @@
 package btw.lowercase.optiboxes.utils;
 
 import btw.lowercase.optiboxes.OptiBoxesClient;
+import btw.lowercase.optiboxes.config.OptiBoxesConfig;
+import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -19,7 +21,13 @@ public class OptiFineResourceHelper implements IdentifiableResourceReloadListene
     @Override
     public @NotNull CompletableFuture<Void> reload(PreparationBarrier preparationBarrier, ResourceManager resourceManager, Executor executor, Executor executor2) {
         this.resourceManager = resourceManager;
-        return CompletableFuture.runAsync(() -> OptiBoxesClient.INSTANCE.inject(this)).thenCompose(preparationBarrier::wait);
+        return CompletableFuture.runAsync(() -> {
+            SkyboxManager.INSTANCE.clearSkyboxes();
+            if (OptiBoxesConfig.instance().enabled) {
+                OptiBoxesClient.INSTANCE.getLogger().info("Looking for OptiFine/MCPatcher Skies...");
+                OptiBoxesClient.INSTANCE.convert(this);
+            }
+        }).thenCompose(preparationBarrier::wait);
     }
 
     @Override
