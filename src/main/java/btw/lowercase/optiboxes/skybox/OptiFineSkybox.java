@@ -1,23 +1,22 @@
 package btw.lowercase.optiboxes.skybox;
 
-import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.utils.components.Blend;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Axis;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.FogParameters;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 
 import java.util.List;
 
@@ -62,28 +61,8 @@ public class OptiFineSkybox {
         // Sunrise/Sunset
         DimensionSpecialEffects effects = level.effects();
         if (effects.isSunriseOrSunset(timeOfDay)) {
-            int sunriseOrSunsetColor = effects.getSunriseOrSunsetColor(timeOfDay);
-            if (OptiBoxesConfig.instance().useNewSunriseRendering || level.isRaining() || level.isThundering()) {
-                // TODO/NOTE: Fix for broken sky when raining/thundering?
-                skyRenderer.renderSunriseAndSunset(poseStack, bufferSource, sunAngle, sunriseOrSunsetColor);
-            } else {
-                RenderSystem.setShader(CoreShaders.POSITION_COLOR);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                poseStack.pushPose();
-                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(sunAngle) < 0.0F ? 180.0F : 0.0F));
-                poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-                Matrix4f matrix4f = poseStack.last().pose();
-                BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-                builder.addVertex(matrix4f, 0.0F, 100.0F, 0.0F).setColor(sunriseOrSunsetColor);
-                for (int n = 0; n <= 16; ++n) {
-                    float o = (float) n * (float) (Math.PI * 2) / 16.0F;
-                    float q = Mth.cos(o);
-                    builder.addVertex(matrix4f, Mth.sin(o) * 120.0F, q * 120.0F, -q * 40.0F * ARGB.alphaFloat(sunriseOrSunsetColor)).setColor(ARGB.transparent(sunriseOrSunsetColor));
-                }
-                BufferUploader.drawWithShader(builder.buildOrThrow());
-                poseStack.popPose();
-            }
+            skyRenderer.renderSunriseAndSunset(poseStack, bufferSource, sunAngle, effects.getSunriseOrSunsetColor(timeOfDay));
+            bufferSource.endBatch();
         }
 
         // OptiFine Sky Rendering
@@ -93,10 +72,7 @@ public class OptiFineSkybox {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel); // TODO/NOTE: needed?
             this.render(poseStack, level, tickDelta);
             poseStack.popPose();
-            if (OptiBoxesConfig.instance().renderSunMoonStars) {
-                skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
-            }
-            bufferSource.endBatch();
+            skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
         }
@@ -137,11 +113,11 @@ public class OptiFineSkybox {
 
     public void tick(ClientLevel level) {
         this.active = true;
-        if (!level.dimension().equals(this.worldResourceKey)) {
+        if (level.dimension().equals(this.worldResourceKey)) {
+            this.layers.forEach(layer -> layer.tick(level));
+        } else {
             this.layers.forEach(layer -> layer.setConditionAlpha(-1.0F));
             this.active = false;
-        } else {
-            this.layers.forEach(layer -> layer.tick(level));
         }
     }
 

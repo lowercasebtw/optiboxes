@@ -31,10 +31,10 @@ public class OptiBoxesConfig {
     public boolean processMCPatcher = false;
 
     @SerialEntry
-    public boolean renderSunMoonStars = true;
+    public boolean renderSunMoon = true;
 
     @SerialEntry
-    public boolean useNewSunriseRendering = false;
+    public boolean renderStars = true;
 
     public static Screen getConfigScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
@@ -71,15 +71,15 @@ public class OptiBoxesConfig {
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.render_sun_moon_stars"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.render_sun_moon_stars.tooltip")))
-                    .binding(defaults.renderSunMoonStars, () -> config.renderSunMoonStars, (newVal) -> config.renderSunMoonStars = newVal)
+                    .name(Component.translatable("options.optiboxes.render_sun_moon"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.render_sun_moon.tooltip")))
+                    .binding(defaults.renderSunMoon, () -> config.renderSunMoon, (newVal) -> config.renderSunMoon = newVal)
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.use_new_sunrise_rendering"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.use_new_sunrise_rendering.tooltip")))
-                    .binding(defaults.useNewSunriseRendering, () -> config.useNewSunriseRendering, (newVal) -> config.useNewSunriseRendering = newVal)
+                    .name(Component.translatable("options.optiboxes.render_stars"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.render_stars.tooltip")))
+                    .binding(defaults.renderStars, () -> config.renderStars, (newVal) -> config.renderStars = newVal)
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             builder.category(category.build());
