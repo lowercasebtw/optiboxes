@@ -210,7 +210,7 @@ public class OptiFineSkyLayer {
         }
     }
 
-    public boolean isActive(int timeOfDay, int clampedTimeOfDay) {
+    public boolean isActive(long timeOfDay, int clampedTimeOfDay) {
         if (!this.fade.alwaysOn() && CommonUtils.isInTimeInterval(clampedTimeOfDay, this.fade.endFadeOut(), this.fade.startFadeIn())) {
             return false;
         } else {

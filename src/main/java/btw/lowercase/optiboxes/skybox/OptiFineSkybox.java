@@ -117,11 +117,11 @@ public class OptiFineSkybox {
     }
 
     private void render(PoseStack poseStack, Level level, float tickDelta) {
-        int timeOfDay = (int) level.getDayTime();
+        long timeOfDay = level.getDayTime();
         int clampedTimeOfDay = (int) (timeOfDay % 24000L);
         float skyAngle = level.getTimeOfDay(tickDelta);
-        float rainLevel = level.getRainLevel(tickDelta);
         float thunderLevel = level.getThunderLevel(tickDelta);
+        float rainLevel = level.getRainLevel(tickDelta);
         if (rainLevel > 0.0F) {
             thunderLevel /= rainLevel;
         }
