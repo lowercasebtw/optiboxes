@@ -1,7 +1,7 @@
 {
 	"options.optiboxes.title": "OptiBoxes Configuration",
 	"options.optiboxes.enabled": "Enabled",
-	"options.optiboxes.enabled.tooltip": "Enable/disable the mod.",
+	"options.optiboxes.enabled.tooltip": "Enable/disable the custom skybox rendering.",
 	"options.optiboxes.process_optifine": "Process OptiFine",
 	"options.optiboxes.process_optifine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
 	"options.optiboxes.process_mcpatcher": "Process MCPatcher",
