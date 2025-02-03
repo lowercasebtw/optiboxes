@@ -9,7 +9,6 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.*;
@@ -17,6 +16,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 import java.util.List;
@@ -29,7 +29,6 @@ public class OptiFineSkybox {
 
     private final List<OptiFineSkyLayer> layers;
     private final ResourceKey<Level> worldResourceKey;
-    private ClientLevel level = Minecraft.getInstance().level;
     private boolean active = true;
 
     public OptiFineSkybox(List<OptiFineSkyLayer> layers, ResourceKey<Level> worldResourceKey) {
@@ -37,46 +36,34 @@ public class OptiFineSkybox {
         this.worldResourceKey = worldResourceKey;
     }
 
-    public void render(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, Camera camera, MultiBufferSource.BufferSource bufferSource, FogParameters fogParameters) {
-        this.level = (ClientLevel) camera.getEntity().getCommandSenderWorld();
-        this.renderSky(skyRenderer, poseStack, tickDelta, camera, fogParameters, bufferSource);
+    public void renderEndSky(SkyRenderer skyRenderer, PoseStack poseStack, ClientLevel level) {
+        RenderSystem.enableBlend();
+        RenderSystem.depthMask(false);
+        skyRenderer.renderEndSky();
+        this.render(poseStack, level, 0.0F);
+        RenderSystem.depthMask(true);
+        RenderSystem.disableBlend();
     }
 
-    // TODO: Move this to MixinLevelRenderer for other sky modifying support
-    public void renderSky(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, Camera camera, FogParameters fogParameters, MultiBufferSource.BufferSource bufferSource) {
-        Minecraft minecraft = Minecraft.getInstance();
-        RenderSystem.setShaderFog(fogParameters);
-
-        DimensionSpecialEffects effects = this.level.effects();
-        if (effects.skyType() == DimensionSpecialEffects.SkyType.END) {
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
-            skyRenderer.renderEndSky();
-            this.render(poseStack, 0.0F);
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
-            return;
-        } else if (effects.skyType() != DimensionSpecialEffects.SkyType.OVERWORLD) {
-            return;
-        }
-
-        int skyColor = this.level.getSkyColor(camera.getPosition(), tickDelta);
+    public void renderOverworldSky(SkyRenderer skyRenderer, PoseStack poseStack, float tickDelta, ClientLevel level, Vec3 cameraPosition, MultiBufferSource.BufferSource bufferSource, FogParameters fogParameters) {
+        int skyColor = level.getSkyColor(cameraPosition, tickDelta);
         float skyRed = ARGB.redFloat(skyColor);
         float skyGreen = ARGB.greenFloat(skyColor);
         float skyBlue = ARGB.blueFloat(skyColor);
-        float sunAngle = this.level.getSunAngle(tickDelta);
-        float timeOfDay = this.level.getTimeOfDay(tickDelta);
-        float rainLevel = 1.0F - this.level.getRainLevel(tickDelta);
-        float starBrightness = this.level.getStarBrightness(tickDelta) * rainLevel;
+        float sunAngle = level.getSunAngle(tickDelta);
+        float timeOfDay = level.getTimeOfDay(tickDelta);
+        float rainLevel = 1.0F - level.getRainLevel(tickDelta);
+        float starBrightness = level.getStarBrightness(tickDelta) * rainLevel;
 
         RenderSystem.enableBlend();
         RenderSystem.depthMask(false);
         skyRenderer.renderSkyDisc(skyRed, skyGreen, skyBlue);
 
         // Sunrise/Sunset
+        DimensionSpecialEffects effects = level.effects();
         if (effects.isSunriseOrSunset(timeOfDay)) {
             int sunriseOrSunsetColor = effects.getSunriseOrSunsetColor(timeOfDay);
-            if (OptiBoxesConfig.instance().useNewSunriseRendering || this.level.isRaining() || this.level.isThundering()) {
+            if (OptiBoxesConfig.instance().useNewSunriseRendering || level.isRaining() || level.isThundering()) {
                 // TODO/NOTE: Fix for broken sky when raining/thundering?
                 skyRenderer.renderSunriseAndSunset(poseStack, bufferSource, sunAngle, sunriseOrSunsetColor);
             } else {
@@ -104,10 +91,10 @@ public class OptiFineSkybox {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             poseStack.pushPose();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel); // TODO/NOTE: needed?
-            this.render(poseStack, tickDelta);
+            this.render(poseStack, level, tickDelta);
             poseStack.popPose();
             if (OptiBoxesConfig.instance().renderSunMoonStars) {
-                skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, this.level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
+                skyRenderer.renderSunMoonAndStars(poseStack, bufferSource, timeOfDay, level.getMoonPhase(), rainLevel, starBrightness, fogParameters);
             }
             bufferSource.endBatch();
             RenderSystem.disableBlend();
@@ -115,7 +102,7 @@ public class OptiFineSkybox {
         }
 
         // Dark Disc
-        if (this.shouldRenderDarkDisc(minecraft, tickDelta)) {
+        if (this.shouldRenderDarkDisc(level, tickDelta)) {
             skyRenderer.renderDarkDisc(poseStack);
         }
 
@@ -123,24 +110,25 @@ public class OptiFineSkybox {
         RenderSystem.depthMask(true);
     }
 
-    private boolean shouldRenderDarkDisc(Minecraft minecraft, float tickDelta) {
+    private boolean shouldRenderDarkDisc(ClientLevel level, float tickDelta) {
+        Minecraft minecraft = Minecraft.getInstance();
         assert minecraft.player != null;
-        return minecraft.player.getEyePosition(tickDelta).y - this.level.getLevelData().getHorizonHeight(this.level) < 0.0;
+        return minecraft.player.getEyePosition(tickDelta).y - level.getLevelData().getHorizonHeight(level) < 0.0;
     }
 
-    private void render(PoseStack poseStack, float tickDelta) {
-        int timeOfDay = (int) this.level.getDayTime();
+    private void render(PoseStack poseStack, Level level, float tickDelta) {
+        int timeOfDay = (int) level.getDayTime();
         int clampedTimeOfDay = (int) (timeOfDay % 24000L);
-        float skyAngle = this.level.getTimeOfDay(tickDelta);
-        float rainLevel = this.level.getRainLevel(tickDelta);
-        float thunderLevel = this.level.getThunderLevel(tickDelta);
+        float skyAngle = level.getTimeOfDay(tickDelta);
+        float rainLevel = level.getRainLevel(tickDelta);
+        float thunderLevel = level.getThunderLevel(tickDelta);
         if (rainLevel > 0.0F) {
             thunderLevel /= rainLevel;
         }
 
         for (OptiFineSkyLayer optiFineSkyLayer : this.layers) {
             if (optiFineSkyLayer.isActive(timeOfDay, clampedTimeOfDay)) {
-                optiFineSkyLayer.render(this.level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
+                optiFineSkyLayer.render(level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
             }
         }
 

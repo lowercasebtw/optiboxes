@@ -4,9 +4,13 @@ import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.*;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,16 +30,38 @@ public abstract class MixinLevelRenderer {
     @Final
     private RenderBuffers renderBuffers;
 
-    @Inject(method = "method_62215", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderFog(Lnet/minecraft/client/renderer/FogParameters;)V", shift = At.Shift.AFTER), cancellable = true)
+    @Shadow
+    @Nullable
+    private ClientLevel level;
+
+    @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderEndSky()V"))
+    private void optiboxes$renderEndSkybox(SkyRenderer instance, Operation<Void> original) {
+        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
+        if (OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && this.level != null) {
+            PoseStack poseStack = new PoseStack();
+            for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
+                optiFineSkybox.renderEndSky(skyRenderer, poseStack, this.level);
+            }
+        } else {
+            original.call(instance);
+        }
+    }
+
+    @Inject(method = "method_62215", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;<init>()V", shift = At.Shift.BEFORE), cancellable = true)
     private void optiboxes$renderSkyboxes(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        if (OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty()) {
+        if (OptiBoxesConfig.instance().enabled
+                && !activeSkyboxes.isEmpty()
+                && this.level != null
+                && this.level.effects().skyType() == DimensionSpecialEffects.SkyType.OVERWORLD) {
+            PoseStack poseStack = new PoseStack();
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(
+                optiFineSkybox.renderOverworldSky(
                         this.skyRenderer,
-                        new PoseStack(),
+                        poseStack,
                         tickDelta,
-                        Minecraft.getInstance().gameRenderer.getMainCamera(),
+                        this.level,
+                        Minecraft.getInstance().gameRenderer.getMainCamera().getPosition(),
                         this.renderBuffers.bufferSource(),
                         fogParameters
                 );
