@@ -315,7 +315,7 @@ public class CommonUtils {
 
     public static boolean isInTimeInterval(int currentTime, int startTime, int endTime) {
         if (currentTime < 0 || currentTime >= 24000) {
-            throw new RuntimeException("Invalid current time, value must be between 0-23999: " + currentTime);
+            return false; // Invalid time
         } else if (startTime <= endTime) {
             return currentTime >= startTime && currentTime <= endTime;
         } else {
