@@ -7,7 +7,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -28,24 +27,7 @@ public class OptiFineSkybox {
         this.worldResourceKey = worldResourceKey;
     }
 
-    public void renderEndSky(SkyRenderer skyRenderer, PoseStack poseStack, ClientLevel level) {
-        RenderSystem.enableBlend();
-        RenderSystem.depthMask(false);
-        skyRenderer.renderEndSky();
-        this.render(poseStack, level, 0.0F);
-        RenderSystem.depthMask(true);
-        RenderSystem.disableBlend();
-    }
-
-    public void renderOverworldSky(PoseStack poseStack, float tickDelta, ClientLevel level) {
-        poseStack.pushPose();
-        float rainLevel = 1.0F - level.getRainLevel(tickDelta);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel); // TODO/NOTE: needed?
-        this.render(poseStack, level, tickDelta);
-        poseStack.popPose();
-    }
-
-    private void render(PoseStack poseStack, Level level, float tickDelta) {
+    public void render(PoseStack poseStack, Level level, float tickDelta) {
         long timeOfDay = level.getDayTime();
         int clampedTimeOfDay = (int) (timeOfDay % 24000L);
         float skyAngle = level.getTimeOfDay(tickDelta);
@@ -55,11 +37,14 @@ public class OptiFineSkybox {
             thunderLevel /= rainLevel;
         }
 
+        poseStack.pushPose();
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel);
         for (OptiFineSkyLayer optiFineSkyLayer : this.layers) {
             if (optiFineSkyLayer.isActive(timeOfDay, clampedTimeOfDay)) {
                 optiFineSkyLayer.render(level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
             }
         }
+        poseStack.popPose();
 
         Blend.ADD.apply(1.0F - rainLevel);
     }

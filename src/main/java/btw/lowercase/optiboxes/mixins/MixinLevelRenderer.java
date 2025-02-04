@@ -45,13 +45,21 @@ public abstract class MixinLevelRenderer {
     @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderEndSky()V"))
     private void optiboxes$renderEndSkybox(SkyRenderer instance, Operation<Void> original) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        if (OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && this.level != null) {
+        boolean isEnabled = OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && this.level != null;
+        if (isEnabled) {
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
+        }
+
+        original.call(instance);
+        if (isEnabled) {
             PoseStack poseStack = new PoseStack();
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.renderEndSky(skyRenderer, poseStack, this.level);
+                optiFineSkybox.render(poseStack, this.level, 0.0F);
             }
-        } else {
-            original.call(instance);
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 
@@ -91,7 +99,7 @@ public abstract class MixinLevelRenderer {
         if (isEnabled) {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.renderOverworldSky(poseStack, getTickDelta(), this.level);
+                optiFineSkybox.render(poseStack, this.level, getTickDelta());
             }
         }
 
@@ -99,6 +107,7 @@ public abstract class MixinLevelRenderer {
         if (isEnabled) {
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 
