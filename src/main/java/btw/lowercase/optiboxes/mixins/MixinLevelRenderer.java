@@ -23,13 +23,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import java.util.Objects;
 
 @Mixin(value = LevelRenderer.class, priority = 900)
 public abstract class MixinLevelRenderer {
-    @Shadow
-    @Final
-    private SkyRenderer skyRenderer;
-
     @Shadow
     @Final
     private RenderBuffers renderBuffers;
@@ -42,43 +39,9 @@ public abstract class MixinLevelRenderer {
     @Final
     private Minecraft minecraft;
 
-    @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderEndSky()V"))
-    private void optiboxes$renderEndSkybox(SkyRenderer instance, Operation<Void> original) {
-        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        boolean isEnabled = OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && this.level != null;
-        if (isEnabled) {
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
-        }
-
-        original.call(instance);
-        if (isEnabled) {
-            PoseStack poseStack = new PoseStack();
-            for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(poseStack, this.level, 0.0F);
-            }
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        }
-    }
-
-    @Inject(method = "method_62215", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;<init>()V", shift = At.Shift.AFTER))
-    private void optiboxes$top(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
-        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        if (OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty()) {
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
-        }
-    }
-
-    @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderSunriseAndSunset(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;FI)V"))
-    private void optiboxes$endBatchSunrise(SkyRenderer instance, PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float sunAngle, int sunriseOrSunsetColor, Operation<Void> original) {
-        original.call(instance, poseStack, bufferSource, sunAngle, sunriseOrSunsetColor);
-        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        if (OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty()) {
-            renderBuffers.bufferSource().endBatch();
-        }
+    @Unique
+    private boolean isEnabled(List<OptiFineSkybox> activeSkyboxes) {
+        return OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && this.level != null;
     }
 
     // TODO/NOTE: Had to use this, because I couldn't access the tickDelta value from outside the lambda
@@ -92,14 +55,53 @@ public abstract class MixinLevelRenderer {
         }
     }
 
+    @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderEndSky()V"))
+    private void optiboxes$renderEndSkybox(SkyRenderer instance, Operation<Void> original) {
+        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
+        boolean isEnabled = isEnabled(activeSkyboxes);
+        if (isEnabled) {
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
+        }
+
+        original.call(instance);
+        if (isEnabled) {
+            PoseStack poseStack = new PoseStack();
+            for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
+                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), 0.0F);
+            }
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        }
+    }
+
+    @Inject(method = "method_62215", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;<init>()V", shift = At.Shift.AFTER))
+    private void optiboxes$top(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
+        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
+        if (isEnabled(activeSkyboxes)) {
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
+        }
+    }
+
+    @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderSunriseAndSunset(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;FI)V"))
+    private void optiboxes$endBatchSunrise(SkyRenderer instance, PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float sunAngle, int sunriseOrSunsetColor, Operation<Void> original) {
+        original.call(instance, poseStack, bufferSource, sunAngle, sunriseOrSunsetColor);
+        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
+        if (isEnabled(activeSkyboxes)) {
+            renderBuffers.bufferSource().endBatch();
+        }
+    }
+
     @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderSunMoonAndStars(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;FIFFLnet/minecraft/client/renderer/FogParameters;)V"))
     private void optiboxes$renderSkyboxes(SkyRenderer instance, PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float timeOfDay, int moonPhases, float rainLevel, float starBrightness, FogParameters fogParameters, Operation<Void> original) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        boolean isEnabled = OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && this.level != null;
+        boolean isEnabled = isEnabled(activeSkyboxes);
         if (isEnabled) {
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(poseStack, this.level, getTickDelta());
+                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), getTickDelta());
             }
         }
 
@@ -107,7 +109,6 @@ public abstract class MixinLevelRenderer {
         if (isEnabled) {
             RenderSystem.disableBlend();
             RenderSystem.defaultBlendFunc();
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
 
@@ -120,10 +121,8 @@ public abstract class MixinLevelRenderer {
     @Inject(method = "method_62215", at = @At("TAIL"))
     private void optiboxes$bottom(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        if (OptiBoxesConfig.instance().enabled
-                && !activeSkyboxes.isEmpty()
-                && this.level != null
-                && this.level.effects().skyType() != DimensionSpecialEffects.SkyType.END) {
+        if (isEnabled(activeSkyboxes) && Objects.requireNonNull(this.level).effects().skyType() != DimensionSpecialEffects.SkyType.END) {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.depthMask(true);
         }
     }
