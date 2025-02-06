@@ -28,6 +28,7 @@ public class OptiFineSkybox {
     }
 
     public void render(PoseStack poseStack, Level level, float tickDelta) {
+        poseStack.pushPose();
         long timeOfDay = level.getDayTime();
         int clampedTimeOfDay = (int) (timeOfDay % 24000L);
         float skyAngle = level.getTimeOfDay(tickDelta);
@@ -37,16 +38,15 @@ public class OptiFineSkybox {
             thunderLevel /= rainLevel;
         }
 
-        poseStack.pushPose();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel);
         for (OptiFineSkyLayer optiFineSkyLayer : this.layers) {
             if (optiFineSkyLayer.isActive(timeOfDay, clampedTimeOfDay)) {
                 optiFineSkyLayer.render(level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
             }
         }
-        poseStack.popPose();
 
         Blend.ADD.apply(1.0F - rainLevel);
+        poseStack.popPose();
     }
 
     public void tick(ClientLevel level) {

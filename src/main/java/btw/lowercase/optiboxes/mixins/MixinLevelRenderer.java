@@ -115,7 +115,7 @@ public abstract class MixinLevelRenderer {
     @WrapWithCondition(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;endBatch()V"))
     private boolean optiboxes$moveEndBatch(MultiBufferSource.BufferSource instance) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        return !OptiBoxesConfig.instance().enabled || activeSkyboxes.isEmpty();
+        return !isEnabled(activeSkyboxes);
     }
 
     @Inject(method = "method_62215", at = @At("TAIL"))
