@@ -126,6 +126,8 @@ public class OptiFineSkyLayer {
     }
 
     private void drawWithShader(MeshData meshData) {
+        // NOTE: 25w06a+ removes BufferUploader
+        // This is basically BufferUploader#drawWithShader but inlined
         RenderSystem.assertOnRenderThread();
         VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
         vertexBuffer.bind();
