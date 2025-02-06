@@ -56,7 +56,6 @@ public class CommonUtils {
         } else {
             fade.addProperty("alwaysOn", true);
         }
-
         jsonObject.add("fade", fade);
 
         // Speed
@@ -76,13 +75,18 @@ public class CommonUtils {
         }
 
         // Axis
-        JsonArray jsonAxis = new JsonArray();
         if (properties.containsKey("axis")) {
             String[] axis = properties.getProperty("axis").trim().replaceAll(" +", " ").split(" ");
-            List<String> rev = Arrays.asList(axis);
-            axis = rev.toArray(axis);
-            Arrays.stream(axis).forEach(a -> jsonAxis.add(Float.parseFloat(a)));
-            jsonObject.add("axis", jsonAxis);
+            if (axis.length >= 3) {
+                float x = Float.parseFloat(axis[0]);
+                float y = Float.parseFloat(axis[1]);
+                float z = Float.parseFloat(axis[2]);
+                JsonArray axisArray = new JsonArray();
+                axisArray.add(z);
+                axisArray.add(y);
+                axisArray.add(-x);
+                jsonObject.add("axis", axisArray);
+            }
         }
 
         // Weather
