@@ -120,16 +120,14 @@ public class OptiBoxesClient implements ClientModInitializer {
             JsonObject overworldJson = new JsonObject();
             overworldJson.add("layers", overworldLayers);
             overworldJson.addProperty("world", "minecraft:overworld");
-            OptiFineSkybox optiFineSkybox = OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, overworldJson).getOrThrow().getFirst();
-            SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-overworld"), optiFineSkybox);
+            SkyboxManager.INSTANCE.addSkybox(OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, overworldJson).getOrThrow().getFirst());
         }
 
         if (!endLayers.isEmpty()) {
             JsonObject endJson = new JsonObject();
             endJson.add("layers", endLayers);
             endJson.addProperty("world", "minecraft:the_end");
-            OptiFineSkybox optiFineSkybox = OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst();
-            SkyboxManager.INSTANCE.addSkybox(ResourceLocation.fromNamespaceAndPath(MOD_ID, "native-optifine-custom-sky-end"), optiFineSkybox);
+            SkyboxManager.INSTANCE.addSkybox(OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst());
         }
     }
 
