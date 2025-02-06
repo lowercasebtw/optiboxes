@@ -88,10 +88,7 @@ public class OptiFineSkyLayer {
             this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
-                float angle = this.getAngle(level, skyAngle);
-                Quaternionf rotation = new Quaternionf();
-                rotation.rotationAxis(angle, this.axis);
-                poseStack.mulPose(rotation);
+                poseStack.mulPose(new Quaternionf().rotationAxis(this.getAngle(level, skyAngle), this.axis));
             }
 
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
@@ -125,7 +122,12 @@ public class OptiFineSkyLayer {
         this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
         this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
         this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
-        BufferUploader.drawWithShader(builder.buildOrThrow());
+        MeshData meshData = builder.buildOrThrow();
+        VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
+        vertexBuffer.bind();
+        vertexBuffer.upload(meshData);
+        vertexBuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        VertexBuffer.unbind();
     }
 
     private void addVertex(Matrix4f matrix4f, VertexConsumer vertexConsumer, float x, float z, float u, float v) {
@@ -142,7 +144,7 @@ public class OptiFineSkyLayer {
             angleDayStart = (float) (currentAngle % 1.0D);
         }
 
-        return (360.0F * (angleDayStart + skyAngle * this.speed)) * (float) Math.PI / 180.0F;
+        return (360.0F * (angleDayStart + skyAngle * this.speed)) * ((float) Math.PI / 180.0F);
     }
 
     private boolean getConditionCheck(Level level) {
