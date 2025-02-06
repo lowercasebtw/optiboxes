@@ -122,7 +122,11 @@ public class OptiFineSkyLayer {
         this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
         this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
         this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
-        MeshData meshData = builder.buildOrThrow();
+        drawWithShader(builder.buildOrThrow());
+    }
+
+    private void drawWithShader(MeshData meshData) {
+        RenderSystem.assertOnRenderThread();
         VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
         vertexBuffer.bind();
         vertexBuffer.upload(meshData);
