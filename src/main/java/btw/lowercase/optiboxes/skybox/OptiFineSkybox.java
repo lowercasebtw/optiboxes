@@ -2,7 +2,6 @@ package btw.lowercase.optiboxes.skybox;
 
 import btw.lowercase.optiboxes.utils.components.Blend;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -28,7 +27,6 @@ public class OptiFineSkybox {
     }
 
     public void render(PoseStack poseStack, Level level, float tickDelta) {
-        poseStack.pushPose();
         long timeOfDay = level.getDayTime();
         int clampedTimeOfDay = (int) (timeOfDay % 24000L);
         float skyAngle = level.getTimeOfDay(tickDelta);
@@ -38,7 +36,6 @@ public class OptiFineSkybox {
             thunderLevel /= rainLevel;
         }
 
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, rainLevel);
         for (OptiFineSkyLayer optiFineSkyLayer : this.layers) {
             if (optiFineSkyLayer.isActive(timeOfDay, clampedTimeOfDay)) {
                 optiFineSkyLayer.render(level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
@@ -46,7 +43,6 @@ public class OptiFineSkybox {
         }
 
         Blend.ADD.apply(1.0F - rainLevel);
-        poseStack.popPose();
     }
 
     public void tick(ClientLevel level) {

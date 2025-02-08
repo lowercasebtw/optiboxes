@@ -3,6 +3,8 @@ package btw.lowercase.optiboxes.utils;
 import btw.lowercase.optiboxes.utils.components.Range;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
@@ -10,6 +12,7 @@ import net.minecraft.util.Mth;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -367,5 +370,17 @@ public class CommonUtils {
         } else {
             return Codec.DOUBLE.xmap(f -> Mth.clamp(f, min, max), Function.identity());
         }
+    }
+
+    public static void renderBufferBuilder(VertexFormat.Mode vertexFormatMode, VertexFormat defaultVertexFormat, Consumer<BufferBuilder> consumer) {
+        BufferBuilder builder = Tesselator.getInstance().begin(vertexFormatMode, defaultVertexFormat);
+        consumer.accept(builder);
+        MeshData meshData = builder.buildOrThrow();
+        RenderSystem.assertOnRenderThread();
+        VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
+        vertexBuffer.bind();
+        vertexBuffer.upload(meshData);
+        vertexBuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+        VertexBuffer.unbind();
     }
 }

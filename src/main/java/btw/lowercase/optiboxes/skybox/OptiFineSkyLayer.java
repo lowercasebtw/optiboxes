@@ -4,7 +4,10 @@ import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.components.*;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -88,7 +91,7 @@ public class OptiFineSkyLayer {
             this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
-                poseStack.mulPose(new Quaternionf().rotationAxis(this.getAngleRadians(level, skyAngle), this.axis));
+                poseStack.mulPose(new Quaternionf().fromAxisAngleDeg(this.axis, this.getAngle(level, skyAngle)));
             }
 
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
@@ -117,23 +120,12 @@ public class OptiFineSkyLayer {
         float f1 = (float) (side / 3) / 2.0F;
         Matrix4f matrix4f = poseStack.last().pose();
         RenderSystem.setShader(CoreShaders.POSITION_TEX);
-        BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        this.addVertex(matrix4f, builder, -100.0F, -100.0F, f, f1);
-        this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
-        this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
-        this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
-        drawWithShader(builder.buildOrThrow());
-    }
-
-    private void drawWithShader(MeshData meshData) {
-        // NOTE: 25w06a+ removes BufferUploader
-        // This is basically BufferUploader#drawWithShader but inlined
-        RenderSystem.assertOnRenderThread();
-        VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
-        vertexBuffer.bind();
-        vertexBuffer.upload(meshData);
-        vertexBuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-        VertexBuffer.unbind();
+        CommonUtils.renderBufferBuilder(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX, (builder) -> {
+            this.addVertex(matrix4f, builder, -100.0F, -100.0F, f, f1);
+            this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
+            this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
+            this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
+        });
     }
 
     private void addVertex(Matrix4f matrix4f, VertexConsumer vertexConsumer, float x, float z, float u, float v) {
@@ -141,7 +133,7 @@ public class OptiFineSkyLayer {
         vertexConsumer.addVertex(vector4f.x, vector4f.y, vector4f.z).setUv(u, v);
     }
 
-    private float getAngleRadians(Level level, float skyAngle) {
+    private float getAngle(Level level, float skyAngle) {
         float angleDayStart = 0.0F;
         if (this.speed != (float) Math.round(this.speed)) {
             long currentWorldDay = (level.dayTime() + 18000L) / 24000L;
@@ -150,7 +142,8 @@ public class OptiFineSkyLayer {
             angleDayStart = (float) (currentAngle % 1.0D);
         }
 
-        return (float) Math.toRadians(360.0F * (angleDayStart + skyAngle * this.speed));
+        // TODO/NOTE: Why tf do I have to add 59.3F to make it the same position as OptiFine?!?!?
+        return (360.0F * (angleDayStart + skyAngle * this.speed)) + 59.3F;
     }
 
     private boolean getConditionCheck(Level level) {
