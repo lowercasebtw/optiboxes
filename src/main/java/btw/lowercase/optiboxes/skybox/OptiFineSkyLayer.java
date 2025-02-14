@@ -21,7 +21,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
@@ -88,7 +87,7 @@ public class OptiFineSkyLayer {
             this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
-                poseStack.mulPose(new Quaternionf().fromAxisAngleDeg(this.axis, this.getAngle(level, skyAngle)));
+                poseStack.mulPose(Axis.of(this.axis).rotationDegrees(this.getAngle(level, skyAngle)));
             }
 
             VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.panorama(this.source));
