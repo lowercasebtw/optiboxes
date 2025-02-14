@@ -3,7 +3,6 @@ package btw.lowercase.optiboxes.skybox;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.components.*;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -86,7 +85,6 @@ public class OptiFineSkyLayer {
         float fadeAlpha = this.getFadeAlpha(timeOfDay);
         float finalAlpha = Mth.clamp(this.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
         if (!(finalAlpha < 1.0E-4F)) {
-            RenderSystem.setShaderTexture(0, this.source);
             this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
