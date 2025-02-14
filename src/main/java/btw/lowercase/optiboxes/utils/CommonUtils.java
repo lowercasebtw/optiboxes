@@ -1,8 +1,11 @@
 package btw.lowercase.optiboxes.utils;
 
+import btw.lowercase.optiboxes.mixins.RenderPipelinesAccessor;
 import btw.lowercase.optiboxes.utils.components.Range;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.serialization.Codec;
@@ -372,15 +375,29 @@ public class CommonUtils {
         }
     }
 
-    public static void renderBufferBuilder(VertexFormat.Mode vertexFormatMode, VertexFormat defaultVertexFormat, Consumer<BufferBuilder> consumer) {
+    // 25w07a+
+    public static void blendFunc(GlStateManager.SourceFactor sourceFactor, GlStateManager.DestFactor destFactor) {
+        RenderSystem.blendFuncSeparate(sourceFactor, destFactor, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+    }
+
+    public static final RenderPipeline CUSTOM_SKY_PIPELINE = RenderPipelinesAccessor.registerPipeline(
+            RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet())
+                    .withLocation("pipeline/custom_sky")
+                    .withVertexShader("core/position_tex")
+                    .withFragmentShader("core/position_tex")
+                    .withSampler("Sampler0")
+                    .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
+                    .build());
+
+    public static void renderBufferBuilder(RenderPipeline renderPipeline, VertexFormat defaultVertexFormat, VertexFormat.Mode vertexFormatMode, Consumer<BufferBuilder> consumer) {
+        RenderSystem.assertOnRenderThread();
         BufferBuilder builder = Tesselator.getInstance().begin(vertexFormatMode, defaultVertexFormat);
         consumer.accept(builder);
         MeshData meshData = builder.buildOrThrow();
-        RenderSystem.assertOnRenderThread();
         VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
         vertexBuffer.bind();
         vertexBuffer.upload(meshData);
-        vertexBuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
         VertexBuffer.unbind();
+        vertexBuffer.drawWithRenderPipeline(renderPipeline, null);
     }
 }

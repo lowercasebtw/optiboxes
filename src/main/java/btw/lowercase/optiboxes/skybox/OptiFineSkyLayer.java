@@ -13,7 +13,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -119,13 +118,16 @@ public class OptiFineSkyLayer {
         float f = (float) (side % 3) / 3.0F;
         float f1 = (float) (side / 3) / 2.0F;
         Matrix4f matrix4f = poseStack.last().pose();
-        RenderSystem.setShader(CoreShaders.POSITION_TEX);
-        CommonUtils.renderBufferBuilder(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX, (builder) -> {
-            this.addVertex(matrix4f, builder, -100.0F, -100.0F, f, f1);
-            this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
-            this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
-            this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
-        });
+        CommonUtils.renderBufferBuilder(
+                CommonUtils.CUSTOM_SKY_PIPELINE,
+                DefaultVertexFormat.POSITION_TEX,
+                VertexFormat.Mode.QUADS,
+                (builder) -> {
+                    this.addVertex(matrix4f, builder, -100.0F, -100.0F, f, f1);
+                    this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
+                    this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
+                    this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
+                });
     }
 
     private void addVertex(Matrix4f matrix4f, VertexConsumer vertexConsumer, float x, float z, float u, float v) {
@@ -142,8 +144,7 @@ public class OptiFineSkyLayer {
             angleDayStart = (float) (currentAngle % 1.0D);
         }
 
-        // TODO/NOTE: Why tf do I have to add 59.3F to make it the same position as OptiFine?!?!?
-        return (360.0F * (angleDayStart + skyAngle * this.speed)) + 59.3F;
+        return (360.0F * (angleDayStart + skyAngle * this.speed));
     }
 
     private boolean getConditionCheck(Level level) {
