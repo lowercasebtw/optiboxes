@@ -11,7 +11,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -80,7 +81,7 @@ public class OptiFineSkyLayer {
         this.weathers = weathers;
     }
 
-    public void render(Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
+    public void render(Level level, PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
         float weatherAlpha = this.getWeatherAlpha(rainGradient, thunderGradient);
         float fadeAlpha = this.getFadeAlpha(timeOfDay);
         float finalAlpha = Mth.clamp(this.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
@@ -92,37 +93,37 @@ public class OptiFineSkyLayer {
                 poseStack.mulPose(new Quaternionf().fromAxisAngleDeg(this.axis, this.getAngle(level, skyAngle)));
             }
 
+            VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.panorama(this.source));
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
             poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
-            this.renderSide(poseStack, 4);
+            this.renderSide(poseStack, vertexConsumer, 4);
             poseStack.pushPose();
             poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, 1);
+            this.renderSide(poseStack, vertexConsumer, 1);
             poseStack.popPose();
             poseStack.pushPose();
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            this.renderSide(poseStack, 0);
+            this.renderSide(poseStack, vertexConsumer, 0);
             poseStack.popPose();
             poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, 5);
+            this.renderSide(poseStack, vertexConsumer, 5);
             poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, 2);
+            this.renderSide(poseStack, vertexConsumer, 2);
             poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, 3);
+            this.renderSide(poseStack, vertexConsumer, 3);
             poseStack.popPose();
+            bufferSource.endBatch();
         }
     }
 
-    private void renderSide(PoseStack poseStack, int side) {
+    private void renderSide(PoseStack poseStack, VertexConsumer vertexConsumer, int side) {
         float f = (float) (side % 3) / 3.0F;
         float f1 = (float) (side / 3) / 2.0F;
         Matrix4f matrix4f = poseStack.last().pose();
-        CommonUtils.renderBufferBuilder(RenderPipelines.PANORAMA, (builder) -> {
-            this.addVertex(matrix4f, builder, -100.0F, -100.0F, f, f1);
-            this.addVertex(matrix4f, builder, -100.0F, 100.0F, f, f1 + 0.5F);
-            this.addVertex(matrix4f, builder, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
-            this.addVertex(matrix4f, builder, 100.0F, -100.0F, f + 0.33333334F, f1);
-        });
+        this.addVertex(matrix4f, vertexConsumer, -100.0F, -100.0F, f, f1);
+        this.addVertex(matrix4f, vertexConsumer, -100.0F, 100.0F, f, f1 + 0.5F);
+        this.addVertex(matrix4f, vertexConsumer, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
+        this.addVertex(matrix4f, vertexConsumer, 100.0F, -100.0F, f + 0.33333334F, f1);
     }
 
     private void addVertex(Matrix4f matrix4f, VertexConsumer vertexConsumer, float x, float z, float u, float v) {

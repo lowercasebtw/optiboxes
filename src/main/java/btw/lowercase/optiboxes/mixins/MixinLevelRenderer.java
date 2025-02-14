@@ -69,7 +69,7 @@ public abstract class MixinLevelRenderer {
         if (isEnabled) {
             PoseStack poseStack = new PoseStack();
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), 0.0F);
+                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), this.renderBuffers.bufferSource(), 0.0F);
             }
             RenderSystem.depthMask(true);
             RenderSystem.disableBlend();
@@ -104,7 +104,7 @@ public abstract class MixinLevelRenderer {
             poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), getTickDelta());
+                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), bufferSource, getTickDelta());
             }
             poseStack.popPose();
         }

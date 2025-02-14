@@ -3,13 +3,8 @@ package btw.lowercase.optiboxes.utils;
 import btw.lowercase.optiboxes.utils.components.Range;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
@@ -17,7 +12,6 @@ import net.minecraft.util.Mth;
 
 import java.io.InputStream;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -380,17 +374,5 @@ public class CommonUtils {
     // 25w07a+
     public static void blendFunc(GlStateManager.SourceFactor sourceFactor, GlStateManager.DestFactor destFactor) {
         RenderSystem.blendFuncSeparate(sourceFactor, destFactor, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-    }
-
-    public static void renderBufferBuilder(RenderPipeline renderPipeline, Consumer<BufferBuilder> consumer) {
-        RenderSystem.assertOnRenderThread();
-        BufferBuilder builder = Tesselator.getInstance().begin(renderPipeline.getVertexFormatMode(), renderPipeline.getVertexFormat());
-        consumer.accept(builder);
-        MeshData meshData = builder.buildOrThrow();
-        VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
-        vertexBuffer.bind();
-        vertexBuffer.upload(meshData);
-        VertexBuffer.unbind();
-        vertexBuffer.drawWithRenderPipeline(renderPipeline, null);
     }
 }
