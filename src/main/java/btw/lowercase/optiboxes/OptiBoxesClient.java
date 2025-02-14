@@ -7,10 +7,14 @@ import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.OptiFineResourceHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.Command;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import org.slf4j.Logger;
@@ -41,6 +45,11 @@ public class OptiBoxesClient implements ClientModInitializer {
         OptiBoxesConfig.load();
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new OptiFineResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(ClientCommandManager.literal("optiboxes").executes((context) -> {
+            Minecraft minecraft = Minecraft.getInstance();
+            minecraft.schedule(() -> minecraft.setScreen(OptiBoxesConfig.getConfigScreen(minecraft.screen)));
+            return Command.SINGLE_SUCCESS;
+        })));
     }
 
     public void convert(OptiFineResourceHelper managerAccessor) {

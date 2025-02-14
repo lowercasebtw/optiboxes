@@ -56,14 +56,14 @@ public enum Blend {
 
     public static final Codec<Blend> CODEC = Codec.STRING.xmap(Blend::byName, Blend::toString);
 
-    private final Consumer<Float> blendFuncSeparate;
+    private final Consumer<Float> blendConsumer;
 
-    Blend(Consumer<Float> blendFuncSeparate) {
-        this.blendFuncSeparate = blendFuncSeparate;
+    Blend(Consumer<Float> blendConsumer) {
+        this.blendConsumer = blendConsumer;
     }
 
     public void apply(float value) {
-        this.blendFuncSeparate.accept(value);
+        this.blendConsumer.accept(value);
     }
 
     public static Blend byName(String name) {

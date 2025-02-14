@@ -1,13 +1,15 @@
 package btw.lowercase.optiboxes.utils;
 
-import btw.lowercase.optiboxes.mixins.RenderPipelinesAccessor;
 import btw.lowercase.optiboxes.utils.components.Range;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
@@ -380,19 +382,9 @@ public class CommonUtils {
         RenderSystem.blendFuncSeparate(sourceFactor, destFactor, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
     }
 
-    public static final RenderPipeline CUSTOM_SKY_PIPELINE = RenderPipelinesAccessor.registerPipeline(
-            RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet())
-                    .withLocation("pipeline/custom_sky")
-                    .withVertexShader("core/position_tex")
-                    .withFragmentShader("core/position_tex")
-                    .withSampler("Sampler0")
-                    .withDepthWrite(false)
-                    .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
-                    .build());
-
-    public static void renderBufferBuilder(RenderPipeline renderPipeline, VertexFormat defaultVertexFormat, VertexFormat.Mode vertexFormatMode, Consumer<BufferBuilder> consumer) {
+    public static void renderBufferBuilder(RenderPipeline renderPipeline, Consumer<BufferBuilder> consumer) {
         RenderSystem.assertOnRenderThread();
-        BufferBuilder builder = Tesselator.getInstance().begin(vertexFormatMode, defaultVertexFormat);
+        BufferBuilder builder = Tesselator.getInstance().begin(renderPipeline.getVertexFormatMode(), renderPipeline.getVertexFormat());
         consumer.accept(builder);
         MeshData meshData = builder.buildOrThrow();
         VertexBuffer vertexBuffer = meshData.drawState().format().getImmediateDrawVertexBuffer();
