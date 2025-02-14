@@ -373,6 +373,6 @@ public class CommonUtils {
 
     // 25w07a+
     public static void blendFunc(GlStateManager.SourceFactor sourceFactor, GlStateManager.DestFactor destFactor) {
-        RenderSystem.blendFuncSeparate(sourceFactor, destFactor, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        RenderSystem.blendFuncSeparate(sourceFactor, destFactor, sourceFactor, destFactor);
     }
 }
