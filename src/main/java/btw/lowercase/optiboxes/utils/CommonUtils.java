@@ -386,6 +386,7 @@ public class CommonUtils {
                     .withVertexShader("core/position_tex")
                     .withFragmentShader("core/position_tex")
                     .withSampler("Sampler0")
+                    .withDepthWrite(false)
                     .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
                     .build());
 
