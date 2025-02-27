@@ -10,8 +10,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -22,7 +21,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 
 import java.util.List;
 
@@ -79,7 +77,7 @@ public class OptiFineSkyLayer {
         this.weathers = weathers;
     }
 
-    public void render(Level level, PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
+    public void render(Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
         float weatherAlpha = this.getWeatherAlpha(rainGradient, thunderGradient);
         float fadeAlpha = this.getFadeAlpha(timeOfDay);
         float finalAlpha = Mth.clamp(this.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
@@ -90,54 +88,54 @@ public class OptiFineSkyLayer {
                 poseStack.mulPose(Axis.of(this.axis).rotationDegrees(this.getAngle(level, skyAngle)));
             }
 
-            VertexConsumer vertexConsumer = bufferSource.getBuffer(RenderType.panorama(this.source));
-            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-            poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
-            this.renderSide(poseStack, vertexConsumer, 4);
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, vertexConsumer, 1);
-            poseStack.popPose();
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-            this.renderSide(poseStack, vertexConsumer, 0);
-            poseStack.popPose();
-            poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, vertexConsumer, 5);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, vertexConsumer, 2);
-            poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-            this.renderSide(poseStack, vertexConsumer, 3);
-            poseStack.popPose();
-            bufferSource.endBatch();
+            CommonUtils.render(
+                    "Custom Sky",
+                    Minecraft.getInstance().getMainRenderTarget(),
+                    RenderPipelines.PANORAMA,
+                    (bufferBuilder) -> {
+                        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                        poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+                        this.renderSide(poseStack, bufferBuilder, 4);
+                        poseStack.pushPose();
+                        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                        this.renderSide(poseStack, bufferBuilder, 1);
+                        poseStack.popPose();
+                        poseStack.pushPose();
+                        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+                        this.renderSide(poseStack, bufferBuilder, 0);
+                        poseStack.popPose();
+                        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                        this.renderSide(poseStack, bufferBuilder, 5);
+                        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                        this.renderSide(poseStack, bufferBuilder, 2);
+                        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+                        this.renderSide(poseStack, bufferBuilder, 3);
+                        poseStack.popPose();
+                    },
+                    (renderPass) -> renderPass.bindSampler("Sampler0", Minecraft.getInstance().getTextureManager().getTexture(this.source).getTexture()));
         }
     }
 
     private void renderSide(PoseStack poseStack, VertexConsumer vertexConsumer, int side) {
-        float f = (float) (side % 3) / 3.0F;
-        float f1 = (float) (side / 3) / 2.0F;
+        float u = (float) (side % 3) / 3.0F;
+        float v = (float) (side / 3) / 2.0F;
         Matrix4f matrix4f = poseStack.last().pose();
-        this.addVertex(matrix4f, vertexConsumer, -100.0F, -100.0F, f, f1);
-        this.addVertex(matrix4f, vertexConsumer, -100.0F, 100.0F, f, f1 + 0.5F);
-        this.addVertex(matrix4f, vertexConsumer, 100.0F, 100.0F, f + 0.33333334F, f1 + 0.5F);
-        this.addVertex(matrix4f, vertexConsumer, 100.0F, -100.0F, f + 0.33333334F, f1);
-    }
-
-    private void addVertex(Matrix4f matrix4f, VertexConsumer vertexConsumer, float x, float z, float u, float v) {
-        Vector4f vector4f = matrix4f.transform(new Vector4f(x, -100.0F, z, 1.0F));
-        vertexConsumer.addVertex(vector4f.x, vector4f.y, vector4f.z).setUv(u, v);
+        vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, -100.0F).setUv(u, v);
+        vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, 100.0F).setUv(u, v + 0.5F);
+        vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, 100.0F).setUv(u + 0.33333334F, v + 0.5F);
+        vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, -100.0F).setUv(u + 0.33333334F, v);
     }
 
     private float getAngle(Level level, float skyAngle) {
         float angleDayStart = 0.0F;
         if (this.speed != (float) Math.round(this.speed)) {
-            long currentWorldDay = (level.dayTime() + 18000L) / 24000L;
+            long currentWorldDay = (level.getDayTime() + 18000L) / 24000L;
             double anglePerDay = this.speed % 1.0F;
             double currentAngle = (double) currentWorldDay * anglePerDay;
             angleDayStart = (float) (currentAngle % 1.0D);
         }
 
-        return (360.0F * (angleDayStart + skyAngle * this.speed));
+        return 360.0F * (angleDayStart + skyAngle * this.speed);
     }
 
     private boolean getConditionCheck(Level level) {
@@ -205,12 +203,12 @@ public class OptiFineSkyLayer {
         }
     }
 
-    public boolean isActive(long timeOfDay, int clampedTimeOfDay) {
+    public boolean isActive(long dayTime, int clampedTimeOfDay) {
         if (!this.fade.alwaysOn() && CommonUtils.isInTimeInterval(clampedTimeOfDay, this.fade.endFadeOut(), this.fade.startFadeIn())) {
             return false;
         } else {
             if (this.loop.ranges() != null) {
-                long adjustedTime = timeOfDay - (long) this.fade.startFadeIn();
+                long adjustedTime = dayTime - (long) this.fade.startFadeIn();
                 while (adjustedTime < 0L) {
                     adjustedTime += 24000L * (int) this.loop.days();
                 }

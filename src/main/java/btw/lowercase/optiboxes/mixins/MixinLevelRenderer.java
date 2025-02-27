@@ -3,10 +3,12 @@ package btw.lowercase.optiboxes.mixins;
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
+import btw.lowercase.optiboxes.utils.CommonUtils;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.DestFactor;
+import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -61,18 +63,20 @@ public abstract class MixinLevelRenderer {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         boolean isEnabled = isEnabled(activeSkyboxes);
         if (isEnabled) {
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
+            CommonUtils.enableBlend();
+            CommonUtils.depthMask(false);
         }
 
         original.call(instance);
         if (isEnabled) {
             PoseStack poseStack = new PoseStack();
+            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), this.renderBuffers.bufferSource(), 0.0F);
+                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), 0.0F);
             }
-            RenderSystem.depthMask(true);
-            RenderSystem.disableBlend();
+
+            CommonUtils.depthMask(true);
+            CommonUtils.disableBlend();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
@@ -81,8 +85,8 @@ public abstract class MixinLevelRenderer {
     private void optiboxes$top(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         if (isEnabled(activeSkyboxes)) {
-            RenderSystem.enableBlend();
-            RenderSystem.depthMask(false);
+            CommonUtils.enableBlend();
+            CommonUtils.depthMask(false);
         }
     }
 
@@ -100,19 +104,20 @@ public abstract class MixinLevelRenderer {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         boolean isEnabled = isEnabled(activeSkyboxes);
         if (isEnabled) {
+            ClientLevel clientLevel = Objects.requireNonNull(this.level);
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
-            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+            CommonUtils.blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE, SourceFactor.ONE, DestFactor.ZERO);
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), bufferSource, getTickDelta());
+                optiFineSkybox.render(poseStack, clientLevel, getTickDelta());
             }
             poseStack.popPose();
         }
 
         original.call(instance, poseStack, bufferSource, timeOfDay, moonPhases, rainLevel, starBrightness, fogParameters);
         if (isEnabled) {
-            RenderSystem.disableBlend();
-            RenderSystem.defaultBlendFunc();
+            CommonUtils.disableBlend();
+            CommonUtils.defaultBlendFunc();
         }
     }
 
@@ -127,7 +132,7 @@ public abstract class MixinLevelRenderer {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         if (isEnabled(activeSkyboxes) && Objects.requireNonNull(this.level).effects().skyType() != DimensionSpecialEffects.SkyType.END) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            RenderSystem.depthMask(true);
+            CommonUtils.depthMask(true);
         }
     }
 }

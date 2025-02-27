@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -27,9 +26,9 @@ public class OptiFineSkybox {
         this.worldResourceKey = worldResourceKey;
     }
 
-    public void render(PoseStack poseStack, Level level, MultiBufferSource.BufferSource bufferSource, float tickDelta) {
-        long timeOfDay = level.getDayTime();
-        int clampedTimeOfDay = (int) (timeOfDay % 24000L);
+    public void render(PoseStack poseStack, Level level, float tickDelta) {
+        long dayTime = level.getDayTime();
+        int clampedTimeOfDay = (int) (dayTime % 24000L);
         float skyAngle = level.getTimeOfDay(tickDelta);
         float thunderLevel = level.getThunderLevel(tickDelta);
         float rainLevel = level.getRainLevel(tickDelta);
@@ -37,10 +36,8 @@ public class OptiFineSkybox {
             thunderLevel /= rainLevel;
         }
 
-        for (OptiFineSkyLayer optiFineSkyLayer : this.layers) {
-            if (optiFineSkyLayer.isActive(timeOfDay, clampedTimeOfDay)) {
-                optiFineSkyLayer.render(level, poseStack, bufferSource, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
-            }
+        for (OptiFineSkyLayer optiFineSkyLayer : this.layers.stream().filter(layer -> layer.isActive(dayTime, clampedTimeOfDay)).toList()) {
+            optiFineSkyLayer.render(level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
         }
 
         Blend.ADD.apply(1.0F - rainLevel);

@@ -3,8 +3,21 @@ package btw.lowercase.optiboxes.utils;
 import btw.lowercase.optiboxes.utils.components.Range;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.buffers.BufferType;
+import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.DestFactor;
+import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.SourceFactor;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
@@ -12,6 +25,7 @@ import net.minecraft.util.Mth;
 
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -38,12 +52,12 @@ public class CommonUtils {
         // Convert fade
         JsonObject fade = new JsonObject();
         if (properties.containsKey("startFadeIn") && properties.containsKey("endFadeIn") && properties.containsKey("endFadeOut")) {
-            int startFadeIn = Objects.requireNonNull(CommonUtils.toTickTime(properties.getProperty("startFadeIn"))).intValue();
-            int endFadeIn = Objects.requireNonNull(CommonUtils.toTickTime(properties.getProperty("endFadeIn"))).intValue();
-            int endFadeOut = Objects.requireNonNull(CommonUtils.toTickTime(properties.getProperty("endFadeOut"))).intValue();
+            int startFadeIn = Objects.requireNonNull(toTickTime(properties.getProperty("startFadeIn"))).intValue();
+            int endFadeIn = Objects.requireNonNull(toTickTime(properties.getProperty("endFadeIn"))).intValue();
+            int endFadeOut = Objects.requireNonNull(toTickTime(properties.getProperty("endFadeOut"))).intValue();
             int startFadeOut;
             if (properties.containsKey("startFadeOut")) {
-                startFadeOut = Objects.requireNonNull(CommonUtils.toTickTime(properties.getProperty("startFadeOut"))).intValue();
+                startFadeOut = Objects.requireNonNull(toTickTime(properties.getProperty("startFadeOut"))).intValue();
             } else {
                 startFadeOut = endFadeOut - (endFadeIn - startFadeIn);
                 if (startFadeIn <= startFadeOut && endFadeIn >= startFadeOut) {
@@ -51,10 +65,10 @@ public class CommonUtils {
                 }
             }
 
-            fade.addProperty("startFadeIn", CommonUtils.normalizeTickTime(startFadeIn));
-            fade.addProperty("endFadeIn", CommonUtils.normalizeTickTime(endFadeIn));
-            fade.addProperty("startFadeOut", CommonUtils.normalizeTickTime(startFadeOut));
-            fade.addProperty("endFadeOut", CommonUtils.normalizeTickTime(endFadeOut));
+            fade.addProperty("startFadeIn", normalizeTickTime(startFadeIn));
+            fade.addProperty("endFadeIn", normalizeTickTime(endFadeIn));
+            fade.addProperty("startFadeOut", normalizeTickTime(startFadeOut));
+            fade.addProperty("endFadeOut", normalizeTickTime(endFadeOut));
         } else {
             fade.addProperty("alwaysOn", true);
         }
@@ -122,7 +136,7 @@ public class CommonUtils {
 
         // Heights
         if (properties.containsKey("heights")) {
-            List<Range> rangeEntries = CommonUtils.parseRangeEntriesNegative(properties.getProperty("heights"));
+            List<Range> rangeEntries = parseRangeEntriesNegative(properties.getProperty("heights"));
             if (!rangeEntries.isEmpty()) {
                 JsonArray jsonYRanges = new JsonArray();
                 rangeEntries.forEach(range -> {
@@ -137,7 +151,7 @@ public class CommonUtils {
 
         // Days Loop -> Loop
         if (properties.containsKey("days")) {
-            List<Range> rangeEntries = CommonUtils.parseRangeEntries(properties.getProperty("days"));
+            List<Range> rangeEntries = parseRangeEntries(properties.getProperty("days"));
             if (!rangeEntries.isEmpty()) {
                 JsonObject loopObject = new JsonObject();
                 JsonArray loopRange = new JsonArray();
@@ -150,7 +164,7 @@ public class CommonUtils {
 
                 int value = 8;
                 if (properties.containsKey("daysLoop")) {
-                    value = CommonUtils.parseInt(properties.getProperty("daysLoop"), 8);
+                    value = parseInt(properties.getProperty("daysLoop"), 8);
                 }
 
                 loopObject.addProperty("days", value);
@@ -299,6 +313,7 @@ public class CommonUtils {
                 }
             }
         }
+
         return null;
     }
 
@@ -372,7 +387,82 @@ public class CommonUtils {
     }
 
     // 25w07a+
-    public static void blendFunc(GlStateManager.SourceFactor sourceFactor, GlStateManager.DestFactor destFactor) {
-        RenderSystem.blendFuncSeparate(sourceFactor, destFactor, sourceFactor, destFactor);
+    public static void enableBlend() {
+        GlStateManager._enableBlend();
+    }
+
+    public static void disableBlend() {
+        GlStateManager._disableBlend();
+    }
+
+    public static void depthMask(boolean depthMask) {
+        GlStateManager._depthMask(depthMask);
+    }
+
+    public static void blendFunc(SourceFactor sourceFactor, DestFactor destFactor) {
+        blendFuncSeparate(sourceFactor, destFactor, sourceFactor, destFactor);
+    }
+
+    public static void blendFuncSeparate(SourceFactor sourceFactorLeft, DestFactor destFactorLeft, SourceFactor sourceFactorRight, DestFactor destFactorRight) {
+        GlStateManager._blendFuncSeparate(
+                GlConst.toGl(sourceFactorLeft),
+                GlConst.toGl(destFactorLeft),
+                GlConst.toGl(sourceFactorRight),
+                GlConst.toGl(destFactorRight));
+    }
+
+    public static void defaultBlendFunc() {
+        blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
+    }
+
+    public static void render(
+            String name,
+            RenderTarget renderTarget,
+            RenderPipeline renderPipeline,
+            Consumer<BufferBuilder> bufferBuilderConsumer,
+            Consumer<RenderPass> uniformConsumer
+    ) {
+        VertexFormat vertexFormat = renderPipeline.getVertexFormat();
+        VertexFormat.Mode vertexFormatMode = renderPipeline.getVertexFormatMode();
+        RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty());
+        try (GpuBuffer skyBuffer = RenderSystem.getDevice().createBuffer(() -> name, BufferType.VERTICES, BufferUsage.DYNAMIC_WRITE, 24 * vertexFormat.getVertexSize())) {
+            RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(vertexFormatMode);
+            renderPass.setPipeline(renderPipeline);
+            renderPass.setVertexBuffer(0, skyBuffer);
+            renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(6), autoStorageIndexBuffer.type());
+
+            ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(vertexFormat.getVertexSize() * 4);
+            BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, vertexFormatMode, vertexFormat);
+            bufferBuilderConsumer.accept(bufferBuilder);
+            MeshData meshData = bufferBuilder.buildOrThrow();
+            try {
+                RenderSystem.getDevice()
+                        .createCommandEncoder()
+                        .writeToBuffer(skyBuffer, meshData.vertexBuffer(), 0);
+            } catch (Throwable var8) {
+                try {
+                    meshData.close();
+                } catch (Throwable var7) {
+                    var8.addSuppressed(var7);
+                }
+
+                throw var8;
+            }
+
+            meshData.close();
+            uniformConsumer.accept(renderPass);
+            renderPass.drawIndexed(0, meshData.drawState().indexCount());
+            renderPass.close();
+        } catch (Exception exception) {
+            try {
+                renderPass.close();
+            } catch (Throwable var19) {
+                exception.addSuppressed(var19);
+            }
+
+            throw exception;
+        } finally {
+            renderPass.close();
+        }
     }
 }
