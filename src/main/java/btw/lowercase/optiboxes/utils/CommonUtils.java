@@ -12,11 +12,12 @@ import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.SourceFactor;
+import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
@@ -422,47 +423,22 @@ public class CommonUtils {
             Consumer<BufferBuilder> bufferBuilderConsumer,
             Consumer<RenderPass> uniformConsumer
     ) {
-        VertexFormat vertexFormat = renderPipeline.getVertexFormat();
-        VertexFormat.Mode vertexFormatMode = renderPipeline.getVertexFormatMode();
-        RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty());
-        try (GpuBuffer skyBuffer = RenderSystem.getDevice().createBuffer(() -> name, BufferType.VERTICES, BufferUsage.DYNAMIC_WRITE, 24 * vertexFormat.getVertexSize())) {
-            RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(vertexFormatMode);
+        VertexFormat format = renderPipeline.getVertexFormat();
+        VertexFormat.Mode mode = renderPipeline.getVertexFormatMode();
+        BufferBuilder builder = Tesselator.getInstance().begin(mode, format);
+        bufferBuilderConsumer.accept(builder);
+        MeshData meshData = builder.buildOrThrow();
+        GpuDevice device = RenderSystem.getDevice();
+        RenderPass renderPass = device.createCommandEncoder().createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty());
+        try (GpuBuffer buffer = device.createBuffer(() -> name, BufferType.VERTICES, BufferUsage.DYNAMIC_WRITE, meshData.vertexBuffer())) {
+            RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(mode);
             renderPass.setPipeline(renderPipeline);
-            renderPass.setVertexBuffer(0, skyBuffer);
+            renderPass.setVertexBuffer(0, buffer);
             renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(6), autoStorageIndexBuffer.type());
-
-            ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(vertexFormat.getVertexSize() * 4);
-            BufferBuilder bufferBuilder = new BufferBuilder(byteBufferBuilder, vertexFormatMode, vertexFormat);
-            bufferBuilderConsumer.accept(bufferBuilder);
-            MeshData meshData = bufferBuilder.buildOrThrow();
-            try {
-                RenderSystem.getDevice()
-                        .createCommandEncoder()
-                        .writeToBuffer(skyBuffer, meshData.vertexBuffer(), 0);
-            } catch (Throwable var8) {
-                try {
-                    meshData.close();
-                } catch (Throwable var7) {
-                    var8.addSuppressed(var7);
-                }
-
-                throw var8;
-            }
-
-            meshData.close();
             uniformConsumer.accept(renderPass);
             renderPass.drawIndexed(0, meshData.drawState().indexCount());
-            renderPass.close();
-        } catch (Exception exception) {
-            try {
-                renderPass.close();
-            } catch (Throwable var19) {
-                exception.addSuppressed(var19);
-            }
-
-            throw exception;
-        } finally {
-            renderPass.close();
         }
+        renderPass.close();
+        meshData.close();
     }
 }
