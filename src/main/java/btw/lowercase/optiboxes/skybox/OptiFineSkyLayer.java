@@ -82,14 +82,14 @@ public class OptiFineSkyLayer {
         float fadeAlpha = this.getFadeAlpha(timeOfDay);
         float finalAlpha = Mth.clamp(this.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
         if (!(finalAlpha < 1.0E-4F)) {
-            this.blend.apply(finalAlpha);
             poseStack.pushPose();
             if (this.rotate) {
                 poseStack.mulPose(Axis.of(this.axis).rotationDegrees(this.getAngle(level, skyAngle)));
             }
 
+            this.blend.apply(finalAlpha);
             CommonUtils.renderBufferWithPipeline(
-                    OptiBoxesClient.CUSTOM_SKY_PIPELINE,
+                    OptiBoxesClient.getCustomSkyPipeline(this.blend.getBlendFunction()),
                     Minecraft.getInstance().getMainRenderTarget(),
                     (bufferBuilder) -> {
                         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));

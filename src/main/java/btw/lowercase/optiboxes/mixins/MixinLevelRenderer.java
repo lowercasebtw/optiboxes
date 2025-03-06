@@ -8,6 +8,7 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.DestFactor;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -63,8 +64,8 @@ public abstract class MixinLevelRenderer {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         boolean isEnabled = isEnabled(activeSkyboxes);
         if (isEnabled) {
-            CommonUtils.enableBlend();
-            CommonUtils.depthMask(false);
+            GlStateManager._enableBlend();
+            GlStateManager._depthMask(false);
         }
 
         original.call(instance);
@@ -75,8 +76,8 @@ public abstract class MixinLevelRenderer {
                 optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), 0.0F);
             }
 
-            CommonUtils.depthMask(true);
-            CommonUtils.disableBlend();
+            GlStateManager._depthMask(true);
+            GlStateManager._disableBlend();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
@@ -85,8 +86,8 @@ public abstract class MixinLevelRenderer {
     private void optiboxes$top(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         if (isEnabled(activeSkyboxes)) {
-            CommonUtils.enableBlend();
-            CommonUtils.depthMask(false);
+            GlStateManager._enableBlend();
+            GlStateManager._depthMask(false);
         }
     }
 
@@ -116,8 +117,8 @@ public abstract class MixinLevelRenderer {
 
         original.call(instance, poseStack, bufferSource, timeOfDay, moonPhases, rainLevel, starBrightness, fogParameters);
         if (isEnabled) {
-            CommonUtils.disableBlend();
-            CommonUtils.defaultBlendFunc();
+            GlStateManager._disableBlend();
+            CommonUtils.blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
         }
     }
 
@@ -132,7 +133,7 @@ public abstract class MixinLevelRenderer {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         if (isEnabled(activeSkyboxes) && Objects.requireNonNull(this.level).effects().skyType() != DimensionSpecialEffects.SkyType.END) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            CommonUtils.depthMask(true);
+            GlStateManager._depthMask(true);
         }
     }
 }

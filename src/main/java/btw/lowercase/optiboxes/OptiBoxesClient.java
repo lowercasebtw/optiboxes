@@ -8,6 +8,7 @@ import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.OptiFineResourceHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -43,16 +44,22 @@ public class OptiBoxesClient implements ClientModInitializer {
 
     private final Logger logger = LoggerFactory.getLogger("OptiBoxes");
 
-    public static final RenderPipeline CUSTOM_SKY_PIPELINE = RenderPipelinesAccessor.registerPipeline(
-            RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet())
-                    .withLocation("pipeline/custom_sky")
-                    .withVertexShader("core/position_tex")
-                    .withFragmentShader("core/position_tex")
-                    .withDepthWrite(false)
-                    .withColorWrite(true, false)
-                    .withSampler("Sampler0")
-                    .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
-                    .build());
+    public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
+        RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet());
+        builder.withLocation("pipeline/custom_sky");
+        builder.withVertexShader("core/position_tex");
+        builder.withFragmentShader("core/position_tex");
+        builder.withDepthWrite(false);
+        builder.withColorWrite(true, false);
+        if (blendFunction != null) {
+            builder.withBlend(blendFunction);
+        } else {
+            builder.withoutBlend();
+        }
+        builder.withSampler("Sampler0");
+        builder.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS);
+        return builder.build();
+    }
 
     @Override
     public void onInitializeClient() {

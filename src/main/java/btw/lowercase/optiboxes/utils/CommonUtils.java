@@ -387,18 +387,6 @@ public class CommonUtils {
     }
 
     // 25w07a+
-    public static void enableBlend() {
-        GlStateManager._enableBlend();
-    }
-
-    public static void disableBlend() {
-        GlStateManager._disableBlend();
-    }
-
-    public static void depthMask(boolean depthMask) {
-        GlStateManager._depthMask(depthMask);
-    }
-
     public static void blendFunc(SourceFactor sourceFactor, DestFactor destFactor) {
         blendFuncSeparate(sourceFactor, destFactor, sourceFactor, destFactor);
     }
@@ -409,10 +397,6 @@ public class CommonUtils {
                 GlConst.toGl(destFactorLeft),
                 GlConst.toGl(sourceFactorRight),
                 GlConst.toGl(destFactorRight));
-    }
-
-    public static void defaultBlendFunc() {
-        blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
     }
 
     public static void renderBufferWithPipeline(
@@ -431,7 +415,7 @@ public class CommonUtils {
             RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(mode);
             renderPass.setPipeline(renderPipeline);
             renderPass.setVertexBuffer(0, buffer);
-            renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(2), autoStorageIndexBuffer.type());
+            renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(meshData.drawState().indexCount()), autoStorageIndexBuffer.type());
             uniformConsumer.accept(renderPass);
             renderPass.drawIndexed(0, meshData.drawState().indexCount());
         }
