@@ -1,5 +1,6 @@
 package btw.lowercase.optiboxes.skybox;
 
+import btw.lowercase.optiboxes.OptiBoxesClient;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.components.*;
 import com.google.common.collect.ImmutableList;
@@ -10,7 +11,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -88,10 +88,9 @@ public class OptiFineSkyLayer {
                 poseStack.mulPose(Axis.of(this.axis).rotationDegrees(this.getAngle(level, skyAngle)));
             }
 
-            CommonUtils.render(
-                    "Custom Sky",
+            CommonUtils.renderBufferWithPipeline(
+                    OptiBoxesClient.CUSTOM_SKY_PIPELINE,
                     Minecraft.getInstance().getMainRenderTarget(),
-                    RenderPipelines.PANORAMA,
                     (bufferBuilder) -> {
                         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
                         poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));

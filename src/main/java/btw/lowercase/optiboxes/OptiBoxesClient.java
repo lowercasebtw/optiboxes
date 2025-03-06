@@ -1,12 +1,16 @@
 package btw.lowercase.optiboxes;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
+import btw.lowercase.optiboxes.mixins.RenderPipelinesAccessor;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.OptiFineResourceHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.Command;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
@@ -38,6 +42,17 @@ public class OptiBoxesClient implements ClientModInitializer {
     private static final Pattern MCPATCHER_SKY_PATTERN = Pattern.compile("mcpatcher/sky/" + SKY_PATTERN_ENDING);
 
     private final Logger logger = LoggerFactory.getLogger("OptiBoxes");
+
+    public static final RenderPipeline CUSTOM_SKY_PIPELINE = RenderPipelinesAccessor.registerPipeline(
+            RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet())
+                    .withLocation("pipeline/custom_sky")
+                    .withVertexShader("core/position_tex")
+                    .withFragmentShader("core/position_tex")
+                    .withDepthWrite(false)
+                    .withColorWrite(true, false)
+                    .withSampler("Sampler0")
+                    .withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS)
+                    .build());
 
     @Override
     public void onInitializeClient() {

@@ -12,7 +12,6 @@ import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.GlConst;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.SourceFactor;
-import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -416,29 +415,34 @@ public class CommonUtils {
         blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
     }
 
-    public static void render(
+    public static void renderBufferWithPipeline(
             String name,
-            RenderTarget renderTarget,
             RenderPipeline renderPipeline,
+            RenderTarget renderTarget,
             Consumer<BufferBuilder> bufferBuilderConsumer,
             Consumer<RenderPass> uniformConsumer
     ) {
-        VertexFormat format = renderPipeline.getVertexFormat();
         VertexFormat.Mode mode = renderPipeline.getVertexFormatMode();
-        BufferBuilder builder = Tesselator.getInstance().begin(mode, format);
+        BufferBuilder builder = Tesselator.getInstance().begin(mode, renderPipeline.getVertexFormat());
         bufferBuilderConsumer.accept(builder);
-        MeshData meshData = builder.buildOrThrow();
-        GpuDevice device = RenderSystem.getDevice();
-        RenderPass renderPass = device.createCommandEncoder().createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty());
-        try (GpuBuffer buffer = device.createBuffer(() -> name, BufferType.VERTICES, BufferUsage.DYNAMIC_WRITE, meshData.vertexBuffer())) {
+        try (MeshData meshData = builder.buildOrThrow();
+             RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty());
+             GpuBuffer buffer = RenderSystem.getDevice().createBuffer(() -> name, BufferType.VERTICES, BufferUsage.DYNAMIC_WRITE, meshData.vertexBuffer())) {
             RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(mode);
             renderPass.setPipeline(renderPipeline);
             renderPass.setVertexBuffer(0, buffer);
-            renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(6), autoStorageIndexBuffer.type());
+            renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(2), autoStorageIndexBuffer.type());
             uniformConsumer.accept(renderPass);
             renderPass.drawIndexed(0, meshData.drawState().indexCount());
         }
-        renderPass.close();
-        meshData.close();
+    }
+
+    public static void renderBufferWithPipeline(
+            RenderPipeline renderPipeline,
+            RenderTarget renderTarget,
+            Consumer<BufferBuilder> bufferBuilderConsumer,
+            Consumer<RenderPass> uniformConsumer
+    ) {
+        renderBufferWithPipeline("Dynamic vertex buffer", renderPipeline, renderTarget, bufferBuilderConsumer, uniformConsumer);
     }
 }
