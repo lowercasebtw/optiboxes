@@ -162,17 +162,17 @@ public class OptiFineSkyLayer {
         this.conditionAlpha = this.getPositionBrightness(level);
     }
 
-    private float getPositionBrightness(Level world) {
+    private float getPositionBrightness(Level level) {
         if (this.biomes.isEmpty() && this.heights.isEmpty()) {
             return 1.0F;
         }
 
         if (this.conditionAlpha == -1) {
-            boolean conditionCheck = this.getConditionCheck(world);
+            boolean conditionCheck = this.getConditionCheck(level);
             return conditionCheck ? 1.0F : 0.0F;
         }
 
-        return CommonUtils.calculateConditionAlphaValue(1.0F, 0.0F, this.conditionAlpha, (int) (this.transition * 20), this.getConditionCheck(world));
+        return CommonUtils.calculateConditionAlphaValue(1.0F, 0.0F, this.conditionAlpha, (int) (this.transition * 20), this.getConditionCheck(level));
     }
 
     private float getWeatherAlpha(float rainStrength, float thunderStrength) {
@@ -205,18 +205,16 @@ public class OptiFineSkyLayer {
     public boolean isActive(long dayTime, int clampedTimeOfDay) {
         if (!this.fade.alwaysOn() && CommonUtils.isInTimeInterval(clampedTimeOfDay, this.fade.endFadeOut(), this.fade.startFadeIn())) {
             return false;
-        } else {
-            if (this.loop.ranges() != null) {
-                long adjustedTime = dayTime - (long) this.fade.startFadeIn();
-                while (adjustedTime < 0L) {
-                    adjustedTime += 24000L * (int) this.loop.days();
-                }
-
-                int daysPassed = (int) (adjustedTime / 24000L);
-                int currentDay = daysPassed % (int) this.loop.days();
-                return CommonUtils.checkRanges(currentDay, this.loop.ranges());
+        } else if (this.loop.ranges() != null) {
+            long adjustedTime = dayTime - (long) this.fade.startFadeIn();
+            while (adjustedTime < 0L) {
+                adjustedTime += 24000L * (int) this.loop.days();
             }
 
+            int daysPassed = (int) (adjustedTime / 24000L);
+            int currentDay = daysPassed % (int) this.loop.days();
+            return CommonUtils.checkRanges(currentDay, this.loop.ranges());
+        } else {
             return true;
         }
     }

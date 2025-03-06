@@ -387,10 +387,6 @@ public class CommonUtils {
     }
 
     // 25w07a+
-    public static void blendFunc(SourceFactor sourceFactor, DestFactor destFactor) {
-        blendFuncSeparate(sourceFactor, destFactor, sourceFactor, destFactor);
-    }
-
     public static void blendFuncSeparate(SourceFactor sourceFactorLeft, DestFactor destFactorLeft, SourceFactor sourceFactorRight, DestFactor destFactorRight) {
         GlStateManager._blendFuncSeparate(
                 GlConst.toGl(sourceFactorLeft),
