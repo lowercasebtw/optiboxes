@@ -64,6 +64,7 @@ public final class OptiFineSkyLayer implements AutoCloseable {
 
     private GpuTexture texture;
     private GpuBuffer skyBuffer;
+    private RenderSystem.AutoStorageIndexBuffer skyBufferIndices;
     private int skyBufferIndexCount;
     public float conditionAlpha = -1;
 
@@ -88,6 +89,8 @@ public final class OptiFineSkyLayer implements AutoCloseable {
                 this.skyBufferIndexCount = meshData.drawState().indexCount();
                 this.skyBuffer = RenderSystem.getDevice().createBuffer(() -> "Custom Sky", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
             }
+
+            this.skyBufferIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
         });
     }
 
@@ -131,14 +134,13 @@ public final class OptiFineSkyLayer implements AutoCloseable {
             matrix4fStack.pushMatrix();
             matrix4fStack.mul(poseStack.last().pose());
             RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
-            RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-            GpuBuffer indexBuffer = autoStorageIndexBuffer.getBuffer(this.skyBufferIndexCount);
+            GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
             try (RenderPass renderPass = RenderSystem.getDevice()
                     .createCommandEncoder()
                     .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
                 renderPass.setPipeline(OptiBoxesClient.getCustomSkyPipeline(this.blend.getBlendFunction()));
                 renderPass.setVertexBuffer(0, this.skyBuffer);
-                renderPass.setIndexBuffer(indexBuffer, autoStorageIndexBuffer.type());
+                renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
                 renderPass.bindSampler("Sampler0", this.texture);
                 renderPass.drawIndexed(0, this.skyBufferIndexCount);
             }
