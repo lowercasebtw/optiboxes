@@ -4,8 +4,10 @@
 	"package": "btw.lowercase.optiboxes.mixins",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"MixinCloudRenderer",
 		"MixinLevelRenderer",
 		"MixinSkyRenderer",
+		"MixinVertexFormat",
 		"RenderPipelinesAccessor"
 	],
 	"injectors": {

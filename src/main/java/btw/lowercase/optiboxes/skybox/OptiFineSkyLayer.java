@@ -4,35 +4,36 @@ import btw.lowercase.optiboxes.OptiBoxesClient;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.components.*;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.buffers.BufferType;
+import com.mojang.blaze3d.buffers.BufferUsage;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
 import java.util.List;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 
-public class OptiFineSkyLayer {
-    private static final Codec<Vector3f> Vector3fCodec = Codec.FLOAT.listOf().comapFlatMap((list) -> {
-        if (list.size() < 3) {
-            return DataResult.error(() -> "Incomplete number of elements in vector");
-        } else {
-            return DataResult.success(new Vector3f(list.get(0), list.get(1), list.get(2)));
-        }
-    }, (vec) -> ImmutableList.of(vec.x(), vec.y(), vec.z()));
-
+public class OptiFineSkyLayer implements AutoCloseable {
     public static final Codec<OptiFineSkyLayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("source").forGetter(OptiFineSkyLayer::getSource),
             Codec.BOOL.optionalFieldOf("biomeInclusion", true).forGetter(OptiFineSkyLayer::isBiomeInclusion),
@@ -42,10 +43,10 @@ public class OptiFineSkyLayer {
             Fade.CODEC.optionalFieldOf("fade", Fade.DEFAULT).forGetter(OptiFineSkyLayer::getFade),
             Codec.BOOL.optionalFieldOf("rotate", false).forGetter(OptiFineSkyLayer::isRotate),
             Codec.FLOAT.optionalFieldOf("speed", 1.0F).forGetter(OptiFineSkyLayer::getSpeed),
-            Vector3fCodec.optionalFieldOf("axis", new Vector3f(1.0F, 0.0F, 0.0F)).forGetter(OptiFineSkyLayer::getAxis),
+            ExtraCodecs.VECTOR3F.optionalFieldOf("axis", new Vector3f(1.0F, 0.0F, 0.0F)).forGetter(OptiFineSkyLayer::getAxis),
             Loop.CODEC.optionalFieldOf("loop", Loop.DEFAULT).forGetter(OptiFineSkyLayer::getLoop),
             Codec.FLOAT.optionalFieldOf("transition", 1.0F).forGetter(OptiFineSkyLayer::getTransition),
-            Weather.CODEC.listOf().optionalFieldOf("weathers", ImmutableList.of(Weather.CLEAR)).forGetter(OptiFineSkyLayer::getWeathers)
+            Weather.CODEC.listOf().optionalFieldOf("weather", ImmutableList.of(Weather.CLEAR)).forGetter(OptiFineSkyLayer::getWeathers)
     ).apply(instance, OptiFineSkyLayer::new));
 
     private final ResourceLocation source;
@@ -60,6 +61,10 @@ public class OptiFineSkyLayer {
     private final Loop loop;
     private final float transition;
     private final List<Weather> weathers;
+
+    private GpuTexture texture;
+    private GpuBuffer skyBuffer;
+    private int skyBufferIndexCount;
     public float conditionAlpha = -1;
 
     public OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, List<ResourceLocation> biomes, List<Range> heights, Blend blend, Fade fade, boolean rotate, float speed, Vector3f axis, Loop loop, float transition, List<Weather> weathers) {
@@ -75,6 +80,40 @@ public class OptiFineSkyLayer {
         this.loop = loop;
         this.transition = transition;
         this.weathers = weathers;
+        // Setup sky
+        // NOTE: ugh way of doing it but idk how else
+        Minecraft.getInstance().execute(() -> {
+            this.texture = Minecraft.getInstance().getTextureManager().getTexture(this.source).getTexture();
+            try (MeshData meshData = this.buildSky().buildOrThrow()) {
+                this.skyBufferIndexCount = meshData.drawState().indexCount();
+                this.skyBuffer = RenderSystem.getDevice().createBuffer(() -> "Custom Sky", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
+            }
+        });
+    }
+
+    private BufferBuilder buildSky() {
+        BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        PoseStack poseStack = new PoseStack();
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
+        this.renderSide(poseStack, builder, 4);
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        this.renderSide(poseStack, builder, 1);
+        poseStack.popPose();
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        this.renderSide(poseStack, builder, 0);
+        poseStack.popPose();
+        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        this.renderSide(poseStack, builder, 5);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        this.renderSide(poseStack, builder, 2);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        this.renderSide(poseStack, builder, 3);
+        poseStack.popPose();
+        return builder;
     }
 
     public void render(Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
@@ -88,30 +127,23 @@ public class OptiFineSkyLayer {
             }
 
             this.blend.apply(finalAlpha);
-            CommonUtils.renderBufferWithPipeline(
-                    OptiBoxesClient.getCustomSkyPipeline(this.blend.getBlendFunction()),
-                    Minecraft.getInstance().getMainRenderTarget(),
-                    (bufferBuilder) -> {
-                        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                        poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
-                        this.renderSide(poseStack, bufferBuilder, 4);
-                        poseStack.pushPose();
-                        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-                        this.renderSide(poseStack, bufferBuilder, 1);
-                        poseStack.popPose();
-                        poseStack.pushPose();
-                        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-                        this.renderSide(poseStack, bufferBuilder, 0);
-                        poseStack.popPose();
-                        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-                        this.renderSide(poseStack, bufferBuilder, 5);
-                        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-                        this.renderSide(poseStack, bufferBuilder, 2);
-                        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-                        this.renderSide(poseStack, bufferBuilder, 3);
-                        poseStack.popPose();
-                    },
-                    (renderPass) -> renderPass.bindSampler("Sampler0", Minecraft.getInstance().getTextureManager().getTexture(this.source).getTexture()));
+            Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+            matrix4fStack.pushMatrix();
+            matrix4fStack.mul(poseStack.last().pose());
+            RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
+            RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
+            GpuBuffer indexBuffer = autoStorageIndexBuffer.getBuffer(this.skyBufferIndexCount);
+            try (RenderPass renderPass = RenderSystem.getDevice()
+                    .createCommandEncoder()
+                    .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
+                renderPass.setPipeline(OptiBoxesClient.getCustomSkyPipeline(this.blend.getBlendFunction()));
+                renderPass.setVertexBuffer(0, this.skyBuffer);
+                renderPass.setIndexBuffer(indexBuffer, autoStorageIndexBuffer.type());
+                renderPass.bindSampler("Sampler0", this.texture);
+                renderPass.drawIndexed(0, this.skyBufferIndexCount);
+            }
+            matrix4fStack.popMatrix();
+            poseStack.popPose();
         }
     }
 
@@ -269,5 +301,12 @@ public class OptiFineSkyLayer {
 
     public void setConditionAlpha(float conditionAlpha) {
         this.conditionAlpha = conditionAlpha;
+    }
+
+    @Override
+    public void close() {
+        this.texture.close();
+        this.skyBuffer.close();
+        this.skyBufferIndexCount = -1;
     }
 }

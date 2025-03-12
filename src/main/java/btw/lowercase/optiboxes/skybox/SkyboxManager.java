@@ -1,11 +1,13 @@
 package btw.lowercase.optiboxes.skybox;
 
+import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 
 public class SkyboxManager {
     public static final SkyboxManager INSTANCE = new SkyboxManager();
@@ -34,6 +36,10 @@ public class SkyboxManager {
                 this.activeSkyboxes.add(optiFineSkybox);
             }
         }
+    }
+
+    public boolean isEnabled(ClientLevel level) {
+        return OptiBoxesConfig.instance().enabled && !activeSkyboxes.isEmpty() && level != null;
     }
 
     public List<OptiFineSkybox> getActiveSkyboxes() {
