@@ -1,5 +1,6 @@
 package btw.lowercase.optiboxes.skybox;
 
+import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.utils.components.Blend;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -45,7 +46,7 @@ public class OptiFineSkybox {
 
     public void tick(ClientLevel level) {
         this.active = true;
-        if (level.dimension().equals(this.worldResourceKey)) {
+        if (level.dimension().equals(this.worldResourceKey) || (OptiBoxesConfig.instance().showOverworldForUnknownDimension && this.worldResourceKey.equals(Level.OVERWORLD) && !this.worldResourceKey.equals(Level.NETHER) && !this.worldResourceKey.equals(Level.END))) {
             this.layers.forEach(layer -> layer.tick(level));
         } else {
             this.layers.forEach(layer -> layer.setConditionAlpha(-1.0F));

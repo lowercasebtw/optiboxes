@@ -9,5 +9,7 @@
 	"options.optiboxes.render_sun_moon": "Render Sun & Moon",
 	"options.optiboxes.render_sun_moon.tooltip": "Enable/disable rendering of the sun and moon.",
 	"options.optiboxes.render_stars": "Render Stars",
-	"options.optiboxes.render_stars.tooltip": "Enable/disable rendering of the stars."
+	"options.optiboxes.render_stars.tooltip": "Enable/disable rendering of the stars.",
+	"options.optiboxes.show_overworld_for_unknown_dimension": "Show Overworld In Unknown Dimensions",
+	"options.optiboxes.show_overworld_for_unknown_dimension.tooltip": "Will show the overworld skyboxes in unknown dimensions. Will not show in nether/end though unless a skybox defines it."
 }

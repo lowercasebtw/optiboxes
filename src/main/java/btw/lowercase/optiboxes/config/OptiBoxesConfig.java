@@ -36,6 +36,9 @@ public class OptiBoxesConfig {
     @SerialEntry
     public boolean renderStars = true;
 
+    @SerialEntry
+    public boolean showOverworldForUnknownDimension = true;
+
     public static Screen getConfigScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
             builder.title(Component.translatable("options.optiboxes.title"));
@@ -80,6 +83,12 @@ public class OptiBoxesConfig {
                     .name(Component.translatable("options.optiboxes.render_stars"))
                     .description(OptionDescription.of(Component.translatable("options.optiboxes.render_stars.tooltip")))
                     .binding(defaults.renderStars, () -> config.renderStars, (newVal) -> config.renderStars = newVal)
+                    .controller(TickBoxControllerBuilder::create)
+                    .build());
+            category.option(Option.<Boolean>createBuilder()
+                    .name(Component.translatable("options.optiboxes.show_overworld_for_unknown_dimension"))
+                    .description(OptionDescription.of(Component.translatable("options.optiboxes.show_overworld_for_unknown_dimension.tooltip")))
+                    .binding(defaults.renderStars, () -> config.showOverworldForUnknownDimension, (newVal) -> config.showOverworldForUnknownDimension = newVal)
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             builder.category(category.build());
