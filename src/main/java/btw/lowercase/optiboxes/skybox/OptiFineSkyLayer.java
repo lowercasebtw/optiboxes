@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
-public class OptiFineSkyLayer implements AutoCloseable {
+public final class OptiFineSkyLayer implements AutoCloseable {
     public static final Codec<OptiFineSkyLayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("source").forGetter(OptiFineSkyLayer::getSource),
             Codec.BOOL.optionalFieldOf("biomeInclusion", true).forGetter(OptiFineSkyLayer::isBiomeInclusion),
