@@ -46,7 +46,7 @@ public class OptiFineSkybox {
 
     public void tick(ClientLevel level) {
         this.active = true;
-        if (level.dimension().equals(this.worldResourceKey) || (OptiBoxesConfig.instance().showOverworldForUnknownDimension && this.worldResourceKey.equals(Level.OVERWORLD) && !this.worldResourceKey.equals(Level.NETHER) && !this.worldResourceKey.equals(Level.END))) {
+        if (level.dimension().equals(this.worldResourceKey) || (OptiBoxesConfig.instance().showOverworldForUnknownDimension && this.worldResourceKey.equals(Level.OVERWORLD) && !level.dimension().equals(Level.NETHER) && !level.dimension().equals(Level.END))) {
             this.layers.forEach(layer -> layer.tick(level));
         } else {
             this.layers.forEach(layer -> layer.setConditionAlpha(-1.0F));
