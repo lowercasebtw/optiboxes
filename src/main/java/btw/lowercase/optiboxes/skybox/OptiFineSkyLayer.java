@@ -3,24 +3,17 @@ package btw.lowercase.optiboxes.skybox;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.components.*;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
 import java.util.List;
@@ -33,12 +26,12 @@ public final class OptiFineSkyLayer {
             Range.CODEC.listOf().optionalFieldOf("heights", ImmutableList.of()).forGetter(OptiFineSkyLayer::getHeights),
             Blend.CODEC.optionalFieldOf("blend", Blend.ADD).forGetter(OptiFineSkyLayer::getBlend),
             Fade.CODEC.optionalFieldOf("fade", Fade.DEFAULT).forGetter(OptiFineSkyLayer::getFade),
-            Codec.BOOL.optionalFieldOf("rotate", false).forGetter(OptiFineSkyLayer::isRotate),
+            Codec.BOOL.optionalFieldOf("rotate", false).forGetter(OptiFineSkyLayer::shouldRotate),
             Codec.FLOAT.optionalFieldOf("speed", 1.0F).forGetter(OptiFineSkyLayer::getSpeed),
             ExtraCodecs.VECTOR3F.optionalFieldOf("axis", new Vector3f(1.0F, 0.0F, 0.0F)).forGetter(OptiFineSkyLayer::getAxis),
             Loop.CODEC.optionalFieldOf("loop", Loop.DEFAULT).forGetter(OptiFineSkyLayer::getLoop),
             Codec.FLOAT.optionalFieldOf("transition", 1.0F).forGetter(OptiFineSkyLayer::getTransition),
-            Weather.CODEC.listOf().optionalFieldOf("weather", ImmutableList.of(Weather.CLEAR)).forGetter(OptiFineSkyLayer::getWeathers)
+            Weather.CODEC.listOf().optionalFieldOf("weather", ImmutableList.of(Weather.CLEAR)).forGetter(OptiFineSkyLayer::getWeatherConditions)
     ).apply(instance, OptiFineSkyLayer::new));
 
     private final ResourceLocation source;
@@ -52,11 +45,11 @@ public final class OptiFineSkyLayer {
     private final Vector3f axis;
     private final Loop loop;
     private final float transition;
-    private final List<Weather> weathers;
+    private final List<Weather> weatherConditions;
 
     public float conditionAlpha = -1;
 
-    public OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, List<ResourceLocation> biomes, List<Range> heights, Blend blend, Fade fade, boolean rotate, float speed, Vector3f axis, Loop loop, float transition, List<Weather> weathers) {
+    public OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, List<ResourceLocation> biomes, List<Range> heights, Blend blend, Fade fade, boolean rotate, float speed, Vector3f axis, Loop loop, float transition, List<Weather> weatherConditions) {
         this.source = source;
         this.biomeInclusion = biomeInclusion;
         this.biomes = biomes;
@@ -68,88 +61,7 @@ public final class OptiFineSkyLayer {
         this.axis = axis;
         this.loop = loop;
         this.transition = transition;
-        this.weathers = weathers;
-    }
-
-    private BufferBuilder buildSky() {
-        ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(DefaultVertexFormat.POSITION_TEX.getVertexSize() * 24);
-        BufferBuilder builder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        PoseStack poseStack = new PoseStack();
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
-        this.renderSide(poseStack, builder, 4);
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 1);
-        poseStack.popPose();
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-        this.renderSide(poseStack, builder, 0);
-        poseStack.popPose();
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 5);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 2);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 3);
-        poseStack.popPose();
-        return builder;
-    }
-
-    public void render(Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
-        float weatherAlpha = this.getWeatherAlpha(rainGradient, thunderGradient);
-        float fadeAlpha = this.getFadeAlpha(timeOfDay);
-        float finalAlpha = Mth.clamp(this.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
-        if (!(finalAlpha < 1.0E-4F)) {
-            poseStack.pushPose();
-            if (this.rotate) {
-                poseStack.mulPose(Axis.of(this.axis).rotationDegrees(this.getAngle(level, skyAngle)));
-            }
-
-            RenderSystem.setShader(CoreShaders.POSITION_TEX);
-            RenderSystem.setShaderTexture(0, this.source);
-            this.blend.apply(finalAlpha);
-
-            Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-            matrix4fStack.pushMatrix();
-            matrix4fStack.mul(poseStack.last().pose());
-            try (MeshData meshData = this.buildSky().buildOrThrow()) {
-                if (this.blend.getBlendFunction() != null) {
-                    RenderSystem.enableBlend();
-                    RenderSystem.blendFunc(this.blend.getBlendFunction().sourceFactor(), this.blend.getBlendFunction().destFactor());
-                } else {
-                    RenderSystem.disableBlend();
-                }
-
-                BufferUploader.drawWithShader(meshData);
-            }
-
-            matrix4fStack.popMatrix();
-            poseStack.popPose();
-        }
-    }
-
-    private void renderSide(PoseStack poseStack, VertexConsumer vertexConsumer, int side) {
-        float u = (float) (side % 3) / 3.0F;
-        float v = (float) (side / 3) / 2.0F;
-        Matrix4f matrix4f = poseStack.last().pose();
-        vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, -100.0F).setUv(u, v);
-        vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, 100.0F).setUv(u, v + 0.5F);
-        vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, 100.0F).setUv(u + 0.33333334F, v + 0.5F);
-        vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, -100.0F).setUv(u + 0.33333334F, v);
-    }
-
-    private float getAngle(Level level, float skyAngle) {
-        float angleDayStart = 0.0F;
-        if (this.speed != (float) Math.round(this.speed)) {
-            long currentWorldDay = (level.getDayTime() + 18000L) / 24000L;
-            double anglePerDay = this.speed % 1.0F;
-            double currentAngle = (double) currentWorldDay * anglePerDay;
-            angleDayStart = (float) (currentAngle % 1.0D);
-        }
-
-        return 360.0F * (angleDayStart + skyAngle * this.speed);
+        this.weatherConditions = weatherConditions;
     }
 
     private boolean getConditionCheck(Level level) {
@@ -188,33 +100,6 @@ public final class OptiFineSkyLayer {
         }
 
         return CommonUtils.calculateConditionAlphaValue(1.0F, 0.0F, this.conditionAlpha, (int) (this.transition * 20), this.getConditionCheck(level));
-    }
-
-    private float getWeatherAlpha(float rainStrength, float thunderStrength) {
-        float f = 1.0F - rainStrength;
-        float f1 = rainStrength - thunderStrength;
-        float weatherAlpha = 0.0F;
-        if (this.weathers.contains(Weather.CLEAR)) {
-            weatherAlpha += f;
-        }
-
-        if (this.weathers.contains(Weather.RAIN)) {
-            weatherAlpha += f1;
-        }
-
-        if (this.weathers.contains(Weather.THUNDER)) {
-            weatherAlpha += thunderStrength;
-        }
-
-        return Mth.clamp(weatherAlpha, 0.0F, 1.0F);
-    }
-
-    private float getFadeAlpha(int timeOfDay) {
-        if (!this.fade.alwaysOn()) {
-            return CommonUtils.calculateFadeAlphaValue(1.0F, 0.0F, timeOfDay, this.fade.startFadeIn(), this.fade.endFadeIn(), this.fade.startFadeOut(), this.fade.endFadeOut());
-        } else {
-            return 1.0F;
-        }
     }
 
     public boolean isActive(long dayTime, int clampedTimeOfDay) {
@@ -258,7 +143,7 @@ public final class OptiFineSkyLayer {
         return fade;
     }
 
-    public boolean isRotate() {
+    public boolean shouldRotate() {
         return rotate;
     }
 
@@ -278,8 +163,8 @@ public final class OptiFineSkyLayer {
         return transition;
     }
 
-    public List<Weather> getWeathers() {
-        return weathers;
+    public List<Weather> getWeatherConditions() {
+        return weatherConditions;
     }
 
     public void setConditionAlpha(float conditionAlpha) {

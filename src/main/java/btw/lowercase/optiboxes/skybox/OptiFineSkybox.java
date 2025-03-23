@@ -1,9 +1,7 @@
 package btw.lowercase.optiboxes.skybox;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
-import btw.lowercase.optiboxes.utils.components.Blend;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -25,23 +23,6 @@ public class OptiFineSkybox {
     public OptiFineSkybox(List<OptiFineSkyLayer> layers, ResourceKey<Level> worldResourceKey) {
         this.layers = layers;
         this.worldResourceKey = worldResourceKey;
-    }
-
-    public void render(PoseStack poseStack, Level level, float tickDelta) {
-        long dayTime = level.getDayTime();
-        int clampedTimeOfDay = (int) (dayTime % 24000L);
-        float skyAngle = level.getTimeOfDay(tickDelta);
-        float thunderLevel = level.getThunderLevel(tickDelta);
-        float rainLevel = level.getRainLevel(tickDelta);
-        if (rainLevel > 0.0F) {
-            thunderLevel /= rainLevel;
-        }
-
-        for (OptiFineSkyLayer optiFineSkyLayer : this.layers.stream().filter(layer -> layer.isActive(dayTime, clampedTimeOfDay)).toList()) {
-            optiFineSkyLayer.render(level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
-        }
-
-        Blend.ADD.apply(1.0F - rainLevel);
     }
 
     public void tick(ClientLevel level) {

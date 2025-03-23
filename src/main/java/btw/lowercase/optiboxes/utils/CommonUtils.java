@@ -1,6 +1,8 @@
 package btw.lowercase.optiboxes.utils;
 
+import btw.lowercase.optiboxes.utils.components.Fade;
 import btw.lowercase.optiboxes.utils.components.Range;
+import btw.lowercase.optiboxes.utils.components.Weather;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
@@ -367,6 +369,33 @@ public class CommonUtils {
             throw new UnsupportedOperationException("Maximum value was lesser than than the minimum value");
         } else {
             return Codec.DOUBLE.xmap(f -> Mth.clamp(f, min, max), Function.identity());
+        }
+    }
+
+    public static float getWeatherAlpha(List<Weather> weatherConditions, float rainStrength, float thunderStrength) {
+        float f = 1.0F - rainStrength;
+        float f1 = rainStrength - thunderStrength;
+        float weatherAlpha = 0.0F;
+        if (weatherConditions.contains(Weather.CLEAR)) {
+            weatherAlpha += f;
+        }
+
+        if (weatherConditions.contains(Weather.RAIN)) {
+            weatherAlpha += f1;
+        }
+
+        if (weatherConditions.contains(Weather.THUNDER)) {
+            weatherAlpha += thunderStrength;
+        }
+
+        return Mth.clamp(weatherAlpha, 0.0F, 1.0F);
+    }
+
+    public static float getFadeAlpha(Fade fade, int timeOfDay) {
+        if (!fade.alwaysOn()) {
+            return CommonUtils.calculateFadeAlphaValue(1.0F, 0.0F, timeOfDay, fade.startFadeIn(), fade.endFadeIn(), fade.startFadeOut(), fade.endFadeOut());
+        } else {
+            return 1.0F;
         }
     }
 }
