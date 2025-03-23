@@ -42,7 +42,7 @@ public class OptiBoxesClient implements ClientModInitializer {
     private static final String MCPATCHER_SKY_PARENT = "mcpatcher/sky";
     private static final Pattern MCPATCHER_SKY_PATTERN = Pattern.compile("mcpatcher/sky/" + SKY_PATTERN_ENDING);
 
-    private final Logger logger = LoggerFactory.getLogger("OptiBoxes");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxes");
 
     public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
         RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet());
@@ -112,13 +112,13 @@ public class OptiBoxesClient implements ClientModInitializer {
 
                         if (name.equals("moon_phases") || name.equals("sun")) {
                             // TODO/NOTE: Support moon/sun
-                            this.logger.info("Skipping {}, moon_phases/sun aren't supported!", id);
+                            LOGGER.info("Skipping {}, moon_phases/sun aren't supported!", id);
                             return;
                         }
 
                         InputStream inputStream = optiFineResourceHelper.getInputStream(id);
                         if (inputStream == null) {
-                            this.logger.error("Error trying to read namespaced identifier: {}", id);
+                            LOGGER.error("Error trying to read namespaced identifier: {}", id);
                             return;
                         }
 
@@ -126,13 +126,13 @@ public class OptiBoxesClient implements ClientModInitializer {
                         try {
                             properties.load(inputStream);
                         } catch (IOException e) {
-                            this.logger.error("Error trying to read properties from: {}", id);
+                            LOGGER.error("Error trying to read properties from: {}", id);
                             return;
                         } finally {
                             try {
                                 inputStream.close();
                             } catch (IOException e) {
-                                this.logger.error("Error trying to close input stream at namespaced identifier: {}", id);
+                                LOGGER.error("Error trying to close input stream at namespaced identifier: {}", id);
                             }
                         }
 
@@ -163,6 +163,6 @@ public class OptiBoxesClient implements ClientModInitializer {
     }
 
     public Logger getLogger() {
-        return logger;
+        return LOGGER;
     }
 }

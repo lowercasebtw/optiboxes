@@ -7,7 +7,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
 
 public class SkyboxManager {
     public static final SkyboxManager INSTANCE = new SkyboxManager();

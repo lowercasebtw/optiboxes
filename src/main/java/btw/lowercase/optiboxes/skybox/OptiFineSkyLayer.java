@@ -95,7 +95,8 @@ public final class OptiFineSkyLayer implements AutoCloseable {
     }
 
     private BufferBuilder buildSky() {
-        BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(DefaultVertexFormat.POSITION_TEX.getVertexSize() * 24);
+        BufferBuilder builder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         PoseStack poseStack = new PoseStack();
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
@@ -307,6 +308,8 @@ public final class OptiFineSkyLayer implements AutoCloseable {
 
     @Override
     public void close() {
+        Minecraft.getInstance().getTextureManager().getTexture(this.source).close();
+        Minecraft.getInstance().getTextureManager().release(this.source);
         this.texture.close();
         this.skyBuffer.close();
         this.skyBufferIndexCount = -1;
