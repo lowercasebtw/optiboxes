@@ -5,6 +5,7 @@ import btw.lowercase.optiboxes.utils.components.Blend;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
+import net.minecraft.client.renderer.CompiledShaderProgram;
 import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -90,24 +91,25 @@ public class OptiFineSkyRenderer {
                 poseStack.mulPose(Axis.of(optiFineSkyLayer.getAxis()).rotationDegrees(this.getAngle(level, skyAngle, optiFineSkyLayer.getSpeed())));
             }
 
-            RenderSystem.setShader(CoreShaders.POSITION_TEX);
-            RenderSystem.setShaderTexture(0, optiFineSkyLayer.getSource());
-            Blend blend = optiFineSkyLayer.getBlend();
-            blend.apply(finalAlpha);
-            if (blend.getBlendFunction() != null) {
-                RenderSystem.enableBlend();
-                RenderSystem.blendFunc(blend.getBlendFunction().sourceFactor(), blend.getBlendFunction().destFactor());
-            } else {
-                RenderSystem.disableBlend();
-            }
+            try (CompiledShaderProgram compiledShaderProgram = RenderSystem.setShader(CoreShaders.POSITION_TEX)) {
+                RenderSystem.setShaderTexture(0, optiFineSkyLayer.getSource());
+                Blend blend = optiFineSkyLayer.getBlend();
+                blend.apply(finalAlpha);
+                if (blend.getBlendFunction() != null) {
+                    RenderSystem.enableBlend();
+                    RenderSystem.blendFunc(blend.getBlendFunction().sourceFactor(), blend.getBlendFunction().destFactor());
+                } else {
+                    RenderSystem.disableBlend();
+                }
 
-            Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-            matrix4fStack.pushMatrix();
-            matrix4fStack.mul(poseStack.last().pose());
-            this.skyBuffer.bind();
-            this.skyBuffer.drawWithShader(matrix4fStack, RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-            VertexBuffer.unbind();
-            matrix4fStack.popMatrix();
+                Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
+                matrix4fStack.pushMatrix();
+                matrix4fStack.mul(poseStack.last().pose());
+                this.skyBuffer.bind();
+                this.skyBuffer.drawWithShader(matrix4fStack, RenderSystem.getProjectionMatrix(), compiledShaderProgram);
+                VertexBuffer.unbind();
+                matrix4fStack.popMatrix();
+            }
 
             poseStack.popPose();
         }
