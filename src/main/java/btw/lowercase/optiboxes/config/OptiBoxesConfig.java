@@ -21,24 +21,6 @@ public class OptiBoxesConfig {
                             .setPath(YACLPlatform.getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
                             .build()).build();
 
-    @SerialEntry
-    public boolean enabled = true;
-
-    @SerialEntry
-    public boolean processOptiFine = true;
-
-    @SerialEntry
-    public boolean processMCPatcher = false;
-
-    @SerialEntry
-    public boolean renderSunMoon = true;
-
-    @SerialEntry
-    public boolean renderStars = true;
-
-    @SerialEntry
-    public boolean showOverworldForUnknownDimension = true;
-
     public static Screen getConfigScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
             builder.title(Component.translatable("options.optiboxes.title"));
@@ -104,4 +86,22 @@ public class OptiBoxesConfig {
     public static OptiBoxesConfig instance() {
         return CONFIG.instance();
     }
+
+    @SerialEntry
+    public boolean enabled = true;
+
+    @SerialEntry
+    public boolean processOptiFine = true;
+
+    @SerialEntry
+    public boolean processMCPatcher = false;
+
+    @SerialEntry
+    public boolean renderSunMoon = true;
+
+    @SerialEntry
+    public boolean renderStars = true;
+
+    @SerialEntry
+    public boolean showOverworldForUnknownDimension = true;
 }

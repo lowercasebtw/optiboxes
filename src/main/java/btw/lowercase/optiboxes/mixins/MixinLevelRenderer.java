@@ -2,13 +2,10 @@ package btw.lowercase.optiboxes.mixins;
 
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
-import btw.lowercase.optiboxes.utils.CommonUtils;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.opengl.GlStateManager;
-import com.mojang.blaze3d.platform.DestFactor;
-import com.mojang.blaze3d.platform.SourceFactor;
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -58,8 +55,8 @@ public abstract class MixinLevelRenderer {
         List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
         boolean isEnabled = SkyboxManager.INSTANCE.isEnabled(this.level);
         if (isEnabled) {
-            GlStateManager._enableBlend();
-            GlStateManager._depthMask(false);
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
         }
 
         original.call(instance);
@@ -70,8 +67,8 @@ public abstract class MixinLevelRenderer {
                 optiFineSkybox.render(poseStack, Objects.requireNonNull(this.level), 0.0F);
             }
 
-            GlStateManager._depthMask(true);
-            GlStateManager._disableBlend();
+            RenderSystem.depthMask(true);
+            RenderSystem.disableBlend();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
@@ -79,8 +76,8 @@ public abstract class MixinLevelRenderer {
     @Inject(method = "method_62215", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;<init>()V", shift = At.Shift.AFTER))
     private void optiboxes$top(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
         if (SkyboxManager.INSTANCE.isEnabled(this.level)) {
-            GlStateManager._enableBlend();
-            GlStateManager._depthMask(false);
+            RenderSystem.enableBlend();
+            RenderSystem.depthMask(false);
         }
     }
 
@@ -100,7 +97,7 @@ public abstract class MixinLevelRenderer {
             ClientLevel clientLevel = Objects.requireNonNull(this.level);
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
-            CommonUtils.blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE, SourceFactor.ONE, DestFactor.ZERO);
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
                 optiFineSkybox.render(poseStack, clientLevel, getTickDelta());
             }
@@ -109,8 +106,8 @@ public abstract class MixinLevelRenderer {
 
         original.call(instance, poseStack, bufferSource, timeOfDay, moonPhases, rainLevel, starBrightness, fogParameters);
         if (isEnabled) {
-            GlStateManager._disableBlend();
-            CommonUtils.blendFuncSeparate(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ZERO);
+            RenderSystem.disableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         }
     }
 
@@ -123,7 +120,7 @@ public abstract class MixinLevelRenderer {
     private void optiboxes$bottom(FogParameters fogParameters, DimensionSpecialEffects.SkyType skyType, float tickDelta, DimensionSpecialEffects dimensionSpecialEffects, CallbackInfo ci) {
         if (SkyboxManager.INSTANCE.isEnabled(this.level) && Objects.requireNonNull(this.level).effects().skyType() != DimensionSpecialEffects.SkyType.END) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            GlStateManager._depthMask(true);
+            RenderSystem.depthMask(true);
         }
     }
 }

@@ -1,21 +1,15 @@
 package btw.lowercase.optiboxes.skybox;
 
-import btw.lowercase.optiboxes.OptiBoxesClient;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.components.*;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.buffers.BufferType;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.CoreShaders;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -30,10 +24,8 @@ import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
 
 import java.util.List;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 
-public final class OptiFineSkyLayer implements AutoCloseable {
+public final class OptiFineSkyLayer {
     public static final Codec<OptiFineSkyLayer> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("source").forGetter(OptiFineSkyLayer::getSource),
             Codec.BOOL.optionalFieldOf("biomeInclusion", true).forGetter(OptiFineSkyLayer::isBiomeInclusion),
@@ -62,10 +54,6 @@ public final class OptiFineSkyLayer implements AutoCloseable {
     private final float transition;
     private final List<Weather> weathers;
 
-    private GpuTexture texture;
-    private GpuBuffer skyBuffer;
-    private RenderSystem.AutoStorageIndexBuffer skyBufferIndices;
-    private int skyBufferIndexCount;
     public float conditionAlpha = -1;
 
     public OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, List<ResourceLocation> biomes, List<Range> heights, Blend blend, Fade fade, boolean rotate, float speed, Vector3f axis, Loop loop, float transition, List<Weather> weathers) {
@@ -81,17 +69,6 @@ public final class OptiFineSkyLayer implements AutoCloseable {
         this.loop = loop;
         this.transition = transition;
         this.weathers = weathers;
-        // Setup sky
-        // NOTE: ugh way of doing it but idk how else
-        Minecraft.getInstance().execute(() -> {
-            this.texture = Minecraft.getInstance().getTextureManager().getTexture(this.source).getTexture();
-            try (MeshData meshData = this.buildSky().buildOrThrow()) {
-                this.skyBufferIndexCount = meshData.drawState().indexCount();
-                this.skyBuffer = RenderSystem.getDevice().createBuffer(() -> "Custom Sky", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
-            }
-
-            this.skyBufferIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-        });
     }
 
     private BufferBuilder buildSky() {
@@ -130,21 +107,24 @@ public final class OptiFineSkyLayer implements AutoCloseable {
                 poseStack.mulPose(Axis.of(this.axis).rotationDegrees(this.getAngle(level, skyAngle)));
             }
 
+            RenderSystem.setShader(CoreShaders.POSITION_TEX);
+            RenderSystem.setShaderTexture(0, this.source);
             this.blend.apply(finalAlpha);
+
             Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
             matrix4fStack.pushMatrix();
             matrix4fStack.mul(poseStack.last().pose());
-            RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
-            GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
-            try (RenderPass renderPass = RenderSystem.getDevice()
-                    .createCommandEncoder()
-                    .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
-                renderPass.setPipeline(OptiBoxesClient.getCustomSkyPipeline(this.blend.getBlendFunction()));
-                renderPass.setVertexBuffer(0, this.skyBuffer);
-                renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
-                renderPass.bindSampler("Sampler0", this.texture);
-                renderPass.drawIndexed(0, this.skyBufferIndexCount);
+            try (MeshData meshData = this.buildSky().buildOrThrow()) {
+                if (this.blend.getBlendFunction() != null) {
+                    RenderSystem.enableBlend();
+                    RenderSystem.blendFunc(this.blend.getBlendFunction().sourceFactor(), this.blend.getBlendFunction().destFactor());
+                } else {
+                    RenderSystem.disableBlend();
+                }
+
+                BufferUploader.drawWithShader(meshData);
             }
+
             matrix4fStack.popMatrix();
             poseStack.popPose();
         }
@@ -304,14 +284,5 @@ public final class OptiFineSkyLayer implements AutoCloseable {
 
     public void setConditionAlpha(float conditionAlpha) {
         this.conditionAlpha = conditionAlpha;
-    }
-
-    @Override
-    public void close() {
-        Minecraft.getInstance().getTextureManager().getTexture(this.source).close();
-        Minecraft.getInstance().getTextureManager().release(this.source);
-        this.texture.close();
-        this.skyBuffer.close();
-        this.skyBufferIndexCount = -1;
     }
 }

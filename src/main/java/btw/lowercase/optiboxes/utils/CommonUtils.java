@@ -3,21 +3,6 @@ package btw.lowercase.optiboxes.utils;
 import btw.lowercase.optiboxes.utils.components.Range;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.buffers.BufferType;
-import com.mojang.blaze3d.buffers.BufferUsage;
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.opengl.GlConst;
-import com.mojang.blaze3d.opengl.GlStateManager;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.DestFactor;
-import com.mojang.blaze3d.platform.SourceFactor;
-import com.mojang.blaze3d.systems.RenderPass;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
@@ -25,7 +10,6 @@ import net.minecraft.util.Mth;
 
 import java.io.InputStream;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -384,45 +368,5 @@ public class CommonUtils {
         } else {
             return Codec.DOUBLE.xmap(f -> Mth.clamp(f, min, max), Function.identity());
         }
-    }
-
-    // 25w07a+
-    public static void blendFuncSeparate(SourceFactor sourceFactorLeft, DestFactor destFactorLeft, SourceFactor sourceFactorRight, DestFactor destFactorRight) {
-        GlStateManager._blendFuncSeparate(
-                GlConst.toGl(sourceFactorLeft),
-                GlConst.toGl(destFactorLeft),
-                GlConst.toGl(sourceFactorRight),
-                GlConst.toGl(destFactorRight));
-    }
-
-    public static void renderBufferWithPipeline(
-            String name,
-            RenderPipeline renderPipeline,
-            RenderTarget renderTarget,
-            Consumer<BufferBuilder> bufferBuilderConsumer,
-            Consumer<RenderPass> uniformConsumer
-    ) {
-        VertexFormat.Mode mode = renderPipeline.getVertexFormatMode();
-        BufferBuilder builder = Tesselator.getInstance().begin(mode, renderPipeline.getVertexFormat());
-        bufferBuilderConsumer.accept(builder);
-        try (MeshData meshData = builder.buildOrThrow();
-             RenderPass renderPass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty());
-             GpuBuffer buffer = RenderSystem.getDevice().createBuffer(() -> name, BufferType.VERTICES, BufferUsage.DYNAMIC_WRITE, meshData.vertexBuffer())) {
-            RenderSystem.AutoStorageIndexBuffer autoStorageIndexBuffer = RenderSystem.getSequentialBuffer(mode);
-            renderPass.setPipeline(renderPipeline);
-            renderPass.setVertexBuffer(0, buffer);
-            renderPass.setIndexBuffer(autoStorageIndexBuffer.getBuffer(meshData.drawState().indexCount()), autoStorageIndexBuffer.type());
-            uniformConsumer.accept(renderPass);
-            renderPass.drawIndexed(0, meshData.drawState().indexCount());
-        }
-    }
-
-    public static void renderBufferWithPipeline(
-            RenderPipeline renderPipeline,
-            RenderTarget renderTarget,
-            Consumer<BufferBuilder> bufferBuilderConsumer,
-            Consumer<RenderPass> uniformConsumer
-    ) {
-        renderBufferWithPipeline("Dynamic vertex buffer", renderPipeline, renderTarget, bufferBuilderConsumer, uniformConsumer);
     }
 }
