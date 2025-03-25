@@ -91,8 +91,8 @@ public class OptiFineSkyRenderer {
                 poseStack.mulPose(Axis.of(optiFineSkyLayer.getAxis()).rotationDegrees(this.getAngle(level, skyAngle, optiFineSkyLayer.getSpeed())));
             }
 
+            RenderSystem.setShaderTexture(0, optiFineSkyLayer.getSource());
             try (CompiledShaderProgram compiledShaderProgram = RenderSystem.setShader(CoreShaders.POSITION_TEX)) {
-                RenderSystem.setShaderTexture(0, optiFineSkyLayer.getSource());
                 Blend blend = optiFineSkyLayer.getBlend();
                 blend.apply(finalAlpha);
                 if (blend.getBlendFunction() != null) {
