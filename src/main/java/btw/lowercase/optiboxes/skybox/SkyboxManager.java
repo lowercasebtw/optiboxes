@@ -13,6 +13,7 @@ public class SkyboxManager {
 
     private final List<OptiFineSkybox> loadedSkyboxes = new ArrayList<>();
     private final List<OptiFineSkybox> activeSkyboxes = new LinkedList<>();
+    private final OptiFineSkyRenderer optiFineSkyRenderer = new OptiFineSkyRenderer();
 
     public void addSkybox(OptiFineSkybox optiFineSkybox) {
         Preconditions.checkNotNull(optiFineSkybox, "Skybox was null");
@@ -43,5 +44,9 @@ public class SkyboxManager {
 
     public List<OptiFineSkybox> getActiveSkyboxes() {
         return this.activeSkyboxes;
+    }
+
+    public OptiFineSkyRenderer getOptiFineSkyRenderer() {
+        return optiFineSkyRenderer;
     }
 }

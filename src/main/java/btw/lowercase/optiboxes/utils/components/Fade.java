@@ -25,4 +25,12 @@ public record Fade(int startFadeIn, int endFadeIn, int startFadeOut, int endFade
     private static int normalizeIfNot(int time, boolean ignore) {
         return ignore ? time : CommonUtils.normalizeTickTime(time);
     }
+
+    public float getAlpha(int timeOfDay) {
+        if (!alwaysOn) {
+            return CommonUtils.calculateFadeAlphaValue(1.0F, 0.0F, timeOfDay, startFadeIn, endFadeIn, startFadeOut, endFadeOut);
+        } else {
+            return 1.0F;
+        }
+    }
 }
