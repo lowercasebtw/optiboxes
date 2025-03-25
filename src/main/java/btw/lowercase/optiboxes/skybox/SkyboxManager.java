@@ -21,6 +21,7 @@ public class SkyboxManager {
     }
 
     public void clearSkyboxes() {
+        optiFineSkyRenderer.clearCache();
         this.loadedSkyboxes.clear();
         this.activeSkyboxes.clear();
     }

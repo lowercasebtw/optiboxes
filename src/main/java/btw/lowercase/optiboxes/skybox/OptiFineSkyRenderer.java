@@ -13,11 +13,14 @@ import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
@@ -25,6 +28,7 @@ public class OptiFineSkyRenderer {
     private GpuBuffer skyBuffer;
     private RenderSystem.AutoStorageIndexBuffer skyBufferIndices;
     private int skyBufferIndexCount;
+    private final Map<ResourceLocation, GpuTexture> textureCache = new HashMap<>();
 
     private BufferBuilder buildSky() {
         ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(DefaultVertexFormat.POSITION_TEX.getVertexSize() * 24);
@@ -118,7 +122,7 @@ public class OptiFineSkyRenderer {
             matrix4fStack.mul(poseStack.last().pose());
             RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
             GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
-            GpuTexture texture = Minecraft.getInstance().getTextureManager().getTexture(optiFineSkyLayer.getSource()).getTexture();
+            GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.getSource(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
             try (RenderPass renderPass = RenderSystem.getDevice()
                     .createCommandEncoder()
                     .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
@@ -131,5 +135,13 @@ public class OptiFineSkyRenderer {
             matrix4fStack.popMatrix();
             poseStack.popPose();
         }
+    }
+
+    public void clearCache() {
+        for (GpuTexture texture : this.textureCache.values()) {
+            texture.close();
+        }
+
+        this.textureCache.clear();
     }
 }
