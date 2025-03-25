@@ -2,6 +2,7 @@ package btw.lowercase.optiboxes.skybox;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import com.google.common.base.Preconditions;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class SkyboxManager {
     }
 
     public void clearSkyboxes() {
-        optiFineSkyRenderer.clearCache();
+        Minecraft.getInstance().execute(this.optiFineSkyRenderer::clearCache);
         this.loadedSkyboxes.clear();
         this.activeSkyboxes.clear();
     }

@@ -100,33 +100,33 @@ public class OptiFineSkyRenderer {
         }
 
         for (OptiFineSkyLayer optiFineSkyLayer : optiFineSkybox.getLayers().stream().filter(layer -> layer.isActive(dayTime, clampedTimeOfDay)).toList()) {
-            renderSkyLayer(optiFineSkyLayer, level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel);
+            renderSkyLayer(optiFineSkyLayer, level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel, optiFineSkybox.getConditionAlphaFor(optiFineSkyLayer));
         }
 
         Blend.ADD.apply(1.0F - rainLevel);
     }
 
-    public void renderSkyLayer(OptiFineSkyLayer optiFineSkyLayer, Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient) {
-        float weatherAlpha = CommonUtils.getWeatherAlpha(optiFineSkyLayer.getWeathers(), rainGradient, thunderGradient);
-        float fadeAlpha = optiFineSkyLayer.getFade().getAlpha(timeOfDay);
-        float finalAlpha = Mth.clamp(optiFineSkyLayer.conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
+    public void renderSkyLayer(OptiFineSkyLayer optiFineSkyLayer, Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient, float conditionAlpha) {
+        float weatherAlpha = CommonUtils.getWeatherAlpha(optiFineSkyLayer.weatherConditions(), rainGradient, thunderGradient);
+        float fadeAlpha = optiFineSkyLayer.fade().getAlpha(timeOfDay);
+        float finalAlpha = Mth.clamp(conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
         if (!(finalAlpha < 1.0E-4F)) {
             poseStack.pushPose();
-            if (optiFineSkyLayer.shouldRotate()) {
-                poseStack.mulPose(Axis.of(optiFineSkyLayer.getAxis()).rotationDegrees(this.getAngle(level, skyAngle, optiFineSkyLayer.getSpeed())));
+            if (optiFineSkyLayer.rotate()) {
+                poseStack.mulPose(Axis.of(optiFineSkyLayer.axis()).rotationDegrees(this.getAngle(level, skyAngle, optiFineSkyLayer.speed())));
             }
 
-            optiFineSkyLayer.getBlend().apply(finalAlpha);
+            optiFineSkyLayer.blend().apply(finalAlpha);
             Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
             matrix4fStack.pushMatrix();
             matrix4fStack.mul(poseStack.last().pose());
             RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
             GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
-            GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.getSource(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
+            GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
             try (RenderPass renderPass = RenderSystem.getDevice()
                     .createCommandEncoder()
                     .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
-                renderPass.setPipeline(OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.getBlend().getBlendFunction()));
+                renderPass.setPipeline(OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
                 renderPass.setVertexBuffer(0, this.skyBuffer);
                 renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
                 renderPass.bindSampler("Sampler0", texture);
