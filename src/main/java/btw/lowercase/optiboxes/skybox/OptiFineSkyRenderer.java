@@ -6,6 +6,7 @@ import btw.lowercase.optiboxes.utils.components.Blend;
 import com.mojang.blaze3d.buffers.BufferType;
 import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -29,6 +30,7 @@ public class OptiFineSkyRenderer {
     private RenderSystem.AutoStorageIndexBuffer skyBufferIndices;
     private int skyBufferIndexCount;
     private final Map<ResourceLocation, GpuTexture> textureCache = new HashMap<>();
+    private final Map<ResourceLocation, RenderPipeline> renderPipelineCache = new HashMap<>();
 
     private BufferBuilder buildSky() {
         ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(DefaultVertexFormat.POSITION_TEX.getVertexSize() * 24);
@@ -126,7 +128,8 @@ public class OptiFineSkyRenderer {
             try (RenderPass renderPass = RenderSystem.getDevice()
                     .createCommandEncoder()
                     .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
-                renderPass.setPipeline(OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
+                RenderPipeline renderPipeline = this.renderPipelineCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
+                renderPass.setPipeline(renderPipeline);
                 renderPass.setVertexBuffer(0, this.skyBuffer);
                 renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
                 renderPass.bindSampler("Sampler0", texture);
@@ -143,5 +146,6 @@ public class OptiFineSkyRenderer {
         }
 
         this.textureCache.clear();
+        this.renderPipelineCache.clear();
     }
 }
