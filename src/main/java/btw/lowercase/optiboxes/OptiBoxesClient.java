@@ -9,6 +9,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.Command;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
@@ -43,14 +45,19 @@ public class OptiBoxesClient implements ClientModInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxes");
 
     public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
-        RenderPipeline.Builder builder = ((CopyableRenderPipeline) RenderPipelines.PANORAMA).optiboxes$copy();
+        RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelines.MATRICES_COLOR_SNIPPET);
         builder.withLocation(ResourceLocation.fromNamespaceAndPath("optiboxes", "pipeline/custom_sky"));
+        builder.withVertexShader("core/position_tex");
+        builder.withFragmentShader("core/position_tex");
+        builder.withDepthWrite(false);
+        builder.withColorWrite(true, false);
         if (blendFunction != null) {
             builder.withBlend(blendFunction);
         } else {
             builder.withoutBlend();
         }
-
+        builder.withSampler("Sampler0");
+        builder.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS);
         return builder.build();
     }
 
