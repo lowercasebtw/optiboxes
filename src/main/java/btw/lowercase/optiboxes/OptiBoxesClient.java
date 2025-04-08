@@ -1,6 +1,7 @@
 package btw.lowercase.optiboxes;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
+import btw.lowercase.optiboxes.mixins.RenderPipelinesAccessor;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
@@ -19,7 +20,6 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import org.slf4j.Logger;
@@ -44,8 +44,11 @@ public class OptiBoxesClient implements ClientModInitializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxes");
 
+//    "yet_another_config_lib_v3": ">=3.6.4",
+//    "fabric-api": "*"
+
     public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
-        RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelines.MATRICES_COLOR_SNIPPET);
+        RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelinesAccessor.getMatricesColorSnippet());
         builder.withLocation(ResourceLocation.fromNamespaceAndPath("optiboxes", "pipeline/custom_sky"));
         builder.withVertexShader("core/position_tex");
         builder.withFragmentShader("core/position_tex");

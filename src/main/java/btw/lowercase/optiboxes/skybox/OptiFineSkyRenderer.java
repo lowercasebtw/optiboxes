@@ -77,7 +77,7 @@ public class OptiFineSkyRenderer {
             angleDayStart = (float) (currentAngle % 1.0D);
         }
 
-        return 360.0F * (angleDayStart + skyAngle * speed);
+        return -360.0F * (angleDayStart + skyAngle * speed);
     }
 
     public void renderSkybox(OptiFineSkybox optiFineSkybox, PoseStack poseStack, Level level, float tickDelta) {

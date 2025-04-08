@@ -5,6 +5,7 @@ import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ public class OptiFineResourceHelper implements IdentifiableResourceReloadListene
     private ResourceManager resourceManager;
 
     @Override
-    public @NotNull CompletableFuture<Void> reload(PreparationBarrier preparationBarrier, ResourceManager resourceManager, Executor executor, Executor executor2) {
+    public @NotNull CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier preparationBarrier, ResourceManager resourceManager, Executor executor, Executor executor2) {
         this.resourceManager = resourceManager;
         return CompletableFuture.runAsync(() -> {
             SkyboxManager.INSTANCE.clearSkyboxes();

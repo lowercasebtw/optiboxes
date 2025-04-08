@@ -42,7 +42,6 @@ public class OptiBoxesConfig {
     public static Screen getConfigScreen(Screen parent) {
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
             builder.title(Component.translatable("options.optiboxes.title"));
-
             ConfigCategory.Builder category = ConfigCategory.createBuilder();
             category.name(Component.translatable("options.optiboxes.title"));
             Minecraft minecraft = Minecraft.getInstance();
@@ -92,7 +91,6 @@ public class OptiBoxesConfig {
                     .controller(TickBoxControllerBuilder::create)
                     .build());
             builder.category(category.build());
-
             return builder;
         }).generateScreen(parent);
     }
