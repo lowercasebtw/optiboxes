@@ -3,7 +3,6 @@ package btw.lowercase.optiboxes.mixins;
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.FogParameters;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.SkyRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,8 +25,8 @@ public abstract class MixinSkyRenderer {
         return OptiBoxesConfig.instance().renderSunMoon;
     }
 
-    @WrapWithCondition(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderStars(Lnet/minecraft/client/renderer/FogParameters;FLcom/mojang/blaze3d/vertex/PoseStack;)V"))
-    private boolean uniskies$toggleStars(SkyRenderer instance, FogParameters fogParameters, float starBrightness, PoseStack poseStack) {
+    @WrapWithCondition(method = "renderSunMoonAndStars", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderStars(FLcom/mojang/blaze3d/vertex/PoseStack;)V"))
+    private boolean uniskies$toggleStars(SkyRenderer instance, float starBrightness, PoseStack poseStack) {
         return OptiBoxesConfig.instance().renderStars;
     }
 }

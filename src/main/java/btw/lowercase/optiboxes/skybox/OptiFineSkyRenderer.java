@@ -2,10 +2,9 @@ package btw.lowercase.optiboxes.skybox;
 
 import btw.lowercase.optiboxes.OptiBoxesClient;
 import btw.lowercase.optiboxes.utils.CommonUtils;
-import btw.lowercase.optiboxes.utils.components.Blend;
-import com.mojang.blaze3d.buffers.BufferType;
-import com.mojang.blaze3d.buffers.BufferUsage;
+import btw.lowercase.optiboxes.utils.DynamicTransformsBuilder;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -84,7 +83,7 @@ public class OptiFineSkyRenderer {
         if (this.skyBuffer == null) {
             try (MeshData meshData = this.buildSky().buildOrThrow()) {
                 this.skyBufferIndexCount = meshData.drawState().indexCount();
-                this.skyBuffer = RenderSystem.getDevice().createBuffer(() -> "Custom Sky", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
+                this.skyBuffer = RenderSystem.getDevice().createBuffer(() -> "Custom Sky", GpuBuffer.USAGE_COPY_DST, meshData.vertexBuffer());
             }
         }
 
@@ -104,8 +103,6 @@ public class OptiFineSkyRenderer {
         for (OptiFineSkyLayer optiFineSkyLayer : optiFineSkybox.getLayers().stream().filter(layer -> layer.isActive(dayTime, clampedTimeOfDay)).toList()) {
             renderSkyLayer(optiFineSkyLayer, level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel, optiFineSkybox.getConditionAlphaFor(optiFineSkyLayer));
         }
-
-        Blend.ADD.apply(1.0F - rainLevel);
     }
 
     public void renderSkyLayer(OptiFineSkyLayer optiFineSkyLayer, Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient, float conditionAlpha) {
@@ -118,10 +115,14 @@ public class OptiFineSkyRenderer {
                 poseStack.mulPose(Axis.of(optiFineSkyLayer.axis()).rotationDegrees(this.getAngle(level, skyAngle, optiFineSkyLayer.speed())));
             }
 
-            optiFineSkyLayer.blend().apply(finalAlpha);
             Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
             matrix4fStack.pushMatrix();
             matrix4fStack.mul(poseStack.last().pose());
+
+            GpuBufferSlice transforms = DynamicTransformsBuilder.of()
+                    .withShaderColor(optiFineSkyLayer.blend().getShaderColor(finalAlpha))
+                    .build();
+
             RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
             GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
             GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
@@ -132,9 +133,12 @@ public class OptiFineSkyRenderer {
                 renderPass.setPipeline(renderPipeline);
                 renderPass.setVertexBuffer(0, this.skyBuffer);
                 renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
+                RenderSystem.bindDefaultUniforms(renderPass);
+                renderPass.setUniform("DynamicTransforms", transforms);
                 renderPass.bindSampler("Sampler0", texture);
                 renderPass.drawIndexed(0, this.skyBufferIndexCount);
             }
+
             matrix4fStack.popMatrix();
             poseStack.popPose();
         }
