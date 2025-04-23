@@ -128,7 +128,7 @@ public class OptiFineSkyRenderer {
             GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
             try (RenderPass renderPass = RenderSystem.getDevice()
                     .createCommandEncoder()
-                    .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
+                    .createRenderPass(() -> "Custom Sky Rendering", renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
                 RenderPipeline renderPipeline = this.renderPipelineCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
                 renderPass.setPipeline(renderPipeline);
                 renderPass.setVertexBuffer(0, this.skyBuffer);
@@ -136,7 +136,7 @@ public class OptiFineSkyRenderer {
                 RenderSystem.bindDefaultUniforms(renderPass);
                 renderPass.setUniform("DynamicTransforms", transforms);
                 renderPass.bindSampler("Sampler0", texture);
-                renderPass.drawIndexed(0, this.skyBufferIndexCount);
+                renderPass.drawIndexed(0, 0, this.skyBufferIndexCount, 1);
             }
 
             matrix4fStack.popMatrix();
