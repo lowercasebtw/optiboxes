@@ -35,8 +35,7 @@ public final class DynamicTransformsBuilder {
     }
 
     public DynamicTransformsBuilder withShaderColor(float red, float green, float blue, float alpha) {
-        this.colorModulator = Optional.of(new Vector4f(red, green, blue, alpha));
-        return this;
+        return this.withShaderColor(new Vector4f(red, green, blue, alpha));
     }
 
     public DynamicTransformsBuilder withShaderColor(float red, float green, float blue) {
