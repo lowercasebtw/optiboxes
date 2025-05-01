@@ -5,10 +5,10 @@ import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
-import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -20,6 +20,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 import java.util.Objects;
@@ -34,19 +36,12 @@ public abstract class MixinLevelRenderer {
     @Nullable
     private ClientLevel level;
 
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-
-    // TODO/NOTE: Had to use this, because I couldn't access the tickDelta value from outside the lambda
     @Unique
-    private float getTickDelta() {
-        DeltaTracker deltaTracker = this.minecraft.getDeltaTracker();
-        if (this.level == null) {
-            return deltaTracker.getGameTimeDeltaPartialTick(false);
-        } else {
-            return deltaTracker.getGameTimeDeltaPartialTick(!this.level.tickRateManager().runsNormally());
-        }
+    private float optiboxes$tickDelta;
+
+    @Inject(method = "addSkyPass", at = @At("HEAD"))
+    private void optiboxes$getLocals(FrameGraphBuilder frameGraphBuilder, Camera camera, float tickDelta, GpuBufferSlice gpuBufferSlice, CallbackInfo ci) {
+        this.optiboxes$tickDelta = tickDelta;
     }
 
     @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderEndSky()V"))
@@ -55,10 +50,8 @@ public abstract class MixinLevelRenderer {
         boolean isEnabled = SkyboxManager.INSTANCE.isEnabled(this.level);
         original.call(instance);
         if (isEnabled) {
-            PoseStack poseStack = new PoseStack();
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                SkyboxManager.INSTANCE.getOptiFineSkyRenderer().renderSkybox(optiFineSkybox, poseStack, Objects.requireNonNull(this.level), 0.0F);
+                SkyboxManager.INSTANCE.getOptiFineSkyRenderer().renderSkybox(optiFineSkybox, Objects.requireNonNull(this.level), 0.0F);
             }
         }
     }
@@ -77,12 +70,9 @@ public abstract class MixinLevelRenderer {
         boolean isEnabled = SkyboxManager.INSTANCE.isEnabled(this.level);
         if (isEnabled) {
             ClientLevel clientLevel = Objects.requireNonNull(this.level);
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                SkyboxManager.INSTANCE.getOptiFineSkyRenderer().renderSkybox(optiFineSkybox, poseStack, clientLevel, getTickDelta());
+                SkyboxManager.INSTANCE.getOptiFineSkyRenderer().renderSkybox(optiFineSkybox, clientLevel, this.optiboxes$tickDelta);
             }
-            poseStack.popPose();
         }
 
         original.call(instance, poseStack, bufferSource, timeOfDay, moonPhases, rainLevel, starBrightness);

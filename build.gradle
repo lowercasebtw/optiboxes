@@ -32,20 +32,31 @@ loom {
 
 dependencies {
     // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    minecraft("com.mojang:minecraft:${minecraft_version}")
+    mappings(loom.officialMojangMappings())
+    modImplementation("net.fabricmc:fabric-loader:${loader_version}")
 
     // Fabric API - Needs to be specified, otherwise an older version might be defaulted and cause issues.
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
+    if (project.hasProperty("fabric_version")) {
+        modImplementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
+//        modImplementation(fabricApi.module("fabric-api-base", project.fabric_version))
+//        modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
+//        modImplementation(fabricApi.module("fabric-command-api-v2", project.fabric_version))
+//        modImplementation(fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version))
+//        modImplementation(fabricApi.module("fabric-registry-sync-v0", project.fabric_version))
+    }
 
     // YACL
-    modImplementation("dev.isxander:yet-another-config-lib:${project.yacl_version}")
+    if (project.hasProperty("yacl_version")) {
+        modImplementation("dev.isxander:yet-another-config-lib:${project.yacl_version}")
+    }
 
     // Mod Menu
-//    modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}") {
-//        exclude group: 'net.fabricmc.fabric-api'
-//    }
+    if (project.hasProperty("modmenu_version")) {
+        modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}") {
+            exclude group: 'net.fabricmc.fabric-api'
+        }
+    }
 }
 
 processResources {
