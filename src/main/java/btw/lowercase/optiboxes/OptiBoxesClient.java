@@ -1,6 +1,7 @@
 package btw.lowercase.optiboxes;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
+import btw.lowercase.optiboxes.config.OptiBoxesConfigScreen;
 import btw.lowercase.optiboxes.mixins.RenderPipelinesAccessor;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
@@ -72,7 +73,7 @@ public class OptiBoxesClient implements ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
                 dispatcher.register(ClientCommandManager.literal(MOD_ID).executes((context) -> {
                     Minecraft minecraft = Minecraft.getInstance();
-                    minecraft.schedule(() -> minecraft.setScreen(OptiBoxesConfig.getConfigScreen(minecraft.screen)));
+                    minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, OptiBoxesConfig.instance())));
                     return Command.SINGLE_SUCCESS;
                 })));
     }

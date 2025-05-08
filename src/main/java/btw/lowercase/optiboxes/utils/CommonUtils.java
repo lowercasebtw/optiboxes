@@ -3,7 +3,9 @@ package btw.lowercase.optiboxes.utils;
 import btw.lowercase.optiboxes.utils.components.Range;
 import btw.lowercase.optiboxes.utils.components.Weather;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
@@ -311,6 +313,15 @@ public class CommonUtils {
         try {
             return Integer.parseInt(str);
         } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static boolean getBooleanOr(JsonObject object, String key, boolean defaultValue) {
+        final JsonElement element = object.get(key);
+        if (element != null) {
+            return !element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isBoolean()) ? defaultValue : element.getAsBoolean();
+        } else {
             return defaultValue;
         }
     }

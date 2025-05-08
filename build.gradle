@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.10-SNAPSHOT'
+    id 'fabric-loom' version "${loom_version}"
     id 'maven-publish'
 }
 
@@ -41,13 +41,6 @@ dependencies {
         modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
         modImplementation(fabricApi.module("fabric-command-api-v2", project.fabric_version))
         modImplementation(fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version))
-    }
-
-    // YACL
-    if (project.hasProperty("yacl_version")) {
-        modImplementation("dev.isxander:yet-another-config-lib:${project.yacl_version}") {
-            exclude group: 'net.fabricmc.fabric-api'
-        }
     }
 
     // Mod Menu

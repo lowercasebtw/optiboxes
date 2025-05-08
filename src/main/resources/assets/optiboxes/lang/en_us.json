@@ -1,15 +1,18 @@
 {
 	"options.optiboxes.title": "OptiBoxes Configuration",
 	"options.optiboxes.enabled": "Enabled",
+	"options.optiboxes.template": "%s: %s",
+	"options.optiboxes.on": "ON",
+	"options.optiboxes.off": "OFF",
 	"options.optiboxes.enabled.tooltip": "Enable/disable the custom skybox rendering.",
-	"options.optiboxes.process_optifine": "Process OptiFine",
-	"options.optiboxes.process_optifine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
-	"options.optiboxes.process_mcpatcher": "Process MCPatcher",
-	"options.optiboxes.process_mcpatcher.tooltip": "If enabled, the mod will attempt to read/load MCPatcher Custom Skies.",
-	"options.optiboxes.render_sun_moon": "Render Sun & Moon",
-	"options.optiboxes.render_sun_moon.tooltip": "Enable/disable rendering of the sun and moon.",
-	"options.optiboxes.render_stars": "Render Stars",
-	"options.optiboxes.render_stars.tooltip": "Enable/disable rendering of the stars.",
-	"options.optiboxes.show_overworld_for_unknown_dimension": "Show Overworld In Unknown Dimensions",
-	"options.optiboxes.show_overworld_for_unknown_dimension.tooltip": "Will show the overworld skyboxes in unknown dimensions. Will not show in nether/end though unless a skybox defines it."
+	"options.optiboxes.processOptiFine": "Process OptiFine",
+	"options.optiboxes.processOptiFine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
+	"options.optiboxes.processMCPatcher": "Process MCPatcher",
+	"options.optiboxes.processMCPatcher.tooltip": "If enabled, the mod will attempt to read/load MCPatcher Custom Skies.",
+	"options.optiboxes.renderSunMoon": "Render Sun & Moon",
+	"options.optiboxes.renderSunMoon.tooltip": "Enable/disable rendering of the sun and moon.",
+	"options.optiboxes.renderStars": "Render Stars",
+	"options.optiboxes.renderStars.tooltip": "Enable/disable rendering of the stars.",
+	"options.optiboxes.showOverworldForUnknownDimension": "Show Overworld In Unknown Dimensions",
+	"options.optiboxes.showOverworldForUnknownDimension.tooltip": "Will show the overworld skyboxes in unknown dimensions. Will not show in nether/end though unless a skybox defines it."
 }

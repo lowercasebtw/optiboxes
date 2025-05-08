@@ -39,7 +39,7 @@ public final class DynamicTransformsBuilder {
     }
 
     public DynamicTransformsBuilder withShaderColor(float red, float green, float blue) {
-        return this.withShaderColor(red, green, blue, 1.0F);
+        return this.withShaderColor(new Vector3f(red, green, blue));
     }
 
     public DynamicTransformsBuilder withShaderColor(int argb) {
