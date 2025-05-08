@@ -50,27 +50,28 @@ public final class OptiBoxesClient implements ClientModInitializer {
         OptiBoxesConfig.load();
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SkyboxResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(ClientCommandManager.literal("optiboxes").executes((context) -> {
-            Minecraft minecraft = Minecraft.getInstance();
-            minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, OptiBoxesConfig.instance())));
-            return Command.SINGLE_SUCCESS;
-        })));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
+                dispatcher.register(ClientCommandManager.literal(MOD_ID).executes((context) -> {
+                    Minecraft minecraft = Minecraft.getInstance();
+                    minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, OptiBoxesConfig.instance())));
+                    return Command.SINGLE_SUCCESS;
+                })));
     }
 
-    public void convert(SkyboxResourceHelper managerAccessor) {
+    public void convert(SkyboxResourceHelper skyboxResourceHelper) {
         if (OptiBoxesConfig.instance().processOptiFine) {
-            this.parseSkyboxes(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
+            this.parseSkyboxes(skyboxResourceHelper, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
 
         if (OptiBoxesConfig.instance().processMCPatcher) {
-            this.parseSkyboxes(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
+            this.parseSkyboxes(skyboxResourceHelper, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
         }
     }
 
-    private void parseSkyboxes(SkyboxResourceHelper optiFineResourceHelper, String skyParent, Pattern skyPattern) {
+    private void parseSkyboxes(SkyboxResourceHelper skyboxResourceHelper, String skyParent, Pattern skyPattern) {
         final JsonArray overworldLayers = new JsonArray();
         final JsonArray endLayers = new JsonArray();
-        optiFineResourceHelper.searchIn(skyParent)
+        skyboxResourceHelper.searchIn(skyParent)
                 .filter(id -> id.getPath().endsWith(".properties"))
                 .sorted(Comparator.comparing(ResourceLocation::getPath, (id1, id2) -> {
                     final Matcher matcherId1 = skyPattern.matcher(id1);
@@ -82,9 +83,9 @@ public final class OptiBoxesClient implements ClientModInitializer {
                             return id1No - id2No;
                         }
                     }
-
                     return 0;
-                })).forEach(id -> {
+                }))
+                .forEach(id -> {
                     Matcher matcher = skyPattern.matcher(id.getPath());
                     if (matcher.find()) {
                         final String world = matcher.group("world");
@@ -99,7 +100,7 @@ public final class OptiBoxesClient implements ClientModInitializer {
                             return;
                         }
 
-                        final InputStream inputStream = optiFineResourceHelper.getInputStream(id);
+                        final InputStream inputStream = skyboxResourceHelper.getInputStream(id);
                         if (inputStream == null) {
                             LOGGER.error("Error trying to read namespaced identifier: {}", id);
                             return;
@@ -119,7 +120,7 @@ public final class OptiBoxesClient implements ClientModInitializer {
                             }
                         }
 
-                        final JsonObject json = CommonUtils.convertOptiFineSkyProperties(optiFineResourceHelper, properties, id);
+                        final JsonObject json = CommonUtils.convertOptiFineSkyProperties(skyboxResourceHelper, properties, id);
                         if (json != null) {
                             switch (world) {
                                 case "world0" -> overworldLayers.add(json);

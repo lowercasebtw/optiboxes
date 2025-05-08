@@ -10,6 +10,7 @@ import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -42,9 +43,9 @@ public final class CommonUtils {
     private CommonUtils() {
     }
 
-    public static JsonObject convertOptiFineSkyProperties(SkyboxResourceHelper optiFineResourceHelper, Properties properties, ResourceLocation propertiesResourceLocation) {
+    public static JsonObject convertOptiFineSkyProperties(SkyboxResourceHelper skyboxResourceHelper, Properties properties, ResourceLocation propertiesResourceLocation) {
         JsonObject jsonObject = new JsonObject();
-        ResourceLocation sourceTexture = parseSourceTexture(properties.getProperty("source", null), optiFineResourceHelper, propertiesResourceLocation);
+        ResourceLocation sourceTexture = parseSourceTexture(properties.getProperty("source", null), skyboxResourceHelper, propertiesResourceLocation);
         if (sourceTexture == null) {
             return null;
         } else {
@@ -186,7 +187,7 @@ public final class CommonUtils {
         return jsonObject;
     }
 
-    public static ResourceLocation parseSourceTexture(String source, SkyboxResourceHelper optiFineResourceHelper, ResourceLocation propertiesId) {
+    public static @Nullable ResourceLocation parseSourceTexture(String source, SkyboxResourceHelper skyboxResourceHelper, ResourceLocation propertiesId) {
         ResourceLocation textureId;
         String namespace;
         String path;
@@ -221,7 +222,7 @@ public final class CommonUtils {
             return null;
         }
 
-        InputStream textureInputStream = optiFineResourceHelper.getInputStream(textureId);
+        final InputStream textureInputStream = skyboxResourceHelper.getInputStream(textureId);
         if (textureInputStream == null) {
             return null;
         }
@@ -234,7 +235,7 @@ public final class CommonUtils {
         return textureId;
     }
 
-    public static Number toTickTime(String time) {
+    public static @Nullable Number toTickTime(String time) {
         String[] parts = time.split(":");
         if (parts.length == 2) {
             int h = Integer.parseInt(parts[0]);
@@ -267,7 +268,7 @@ public final class CommonUtils {
         return rangeEntries;
     }
 
-    private static Range parseRangeEntry(String part) {
+    private static @Nullable Range parseRangeEntry(String part) {
         if (part != null) {
             if (part.contains("-")) {
                 String[] parts = part.split("-");
@@ -302,17 +303,17 @@ public final class CommonUtils {
         return rangeEntries;
     }
 
-    private static Range parseRangeEntryNegative(String part) {
+    private static @Nullable Range parseRangeEntryNegative(String part) {
         if (part != null) {
             String s = OPTIFINE_RANGE_SEPARATOR.matcher(part).replaceAll("$1=$2");
             if (s.contains("=")) {
                 String[] parts = s.split("=");
                 if (parts.length == 2) {
-                    int j = parseInt(stripBrackets(parts[0]), Integer.MIN_VALUE);
-                    int k = parseInt(stripBrackets(parts[1]), Integer.MIN_VALUE);
+                    final int j = parseInt(stripBrackets(parts[0]), Integer.MIN_VALUE);
+                    final int k = parseInt(stripBrackets(parts[1]), Integer.MIN_VALUE);
                     if (j != Integer.MIN_VALUE && k != Integer.MIN_VALUE) {
-                        int min = Math.min(j, k);
-                        int max = Math.max(j, k);
+                        final int min = Math.min(j, k);
+                        final int max = Math.max(j, k);
                         return new Range(min, max);
                     }
                 }
@@ -367,12 +368,12 @@ public final class CommonUtils {
         if (isInTimeInterval(currentTime, endFadeIn, startFadeOut)) {
             return maxAlpha;
         } else if (isInTimeInterval(currentTime, startFadeIn, endFadeIn)) {
-            int fadeInDuration = calculateCyclicTimeDistance(startFadeIn, endFadeIn);
-            int timePassedSinceFadeInStart = calculateCyclicTimeDistance(startFadeIn, currentTime);
+            final int fadeInDuration = calculateCyclicTimeDistance(startFadeIn, endFadeIn);
+            final int timePassedSinceFadeInStart = calculateCyclicTimeDistance(startFadeIn, currentTime);
             return minAlpha + ((float) timePassedSinceFadeInStart / fadeInDuration) * (maxAlpha - minAlpha);
         } else if (isInTimeInterval(currentTime, startFadeOut, endFadeOut)) {
-            int fadeOutDuration = calculateCyclicTimeDistance(startFadeOut, endFadeOut);
-            int timePassedSinceFadeOutStart = calculateCyclicTimeDistance(startFadeOut, currentTime);
+            final int fadeOutDuration = calculateCyclicTimeDistance(startFadeOut, endFadeOut);
+            final int timePassedSinceFadeOutStart = calculateCyclicTimeDistance(startFadeOut, currentTime);
             return maxAlpha + ((float) timePassedSinceFadeOutStart / fadeOutDuration) * (minAlpha - maxAlpha);
         } else {
             return minAlpha;
@@ -401,20 +402,20 @@ public final class CommonUtils {
         if (min > max) {
             throw new UnsupportedOperationException("Maximum value was lesser than than the minimum value");
         } else {
-            return Codec.DOUBLE.xmap(f -> Mth.clamp(f, min, max), Function.identity());
+            return Codec.DOUBLE.xmap(value -> Mth.clamp(value, min, max), Function.identity());
         }
     }
 
     public static float getWeatherAlpha(List<Weather> weatherConditions, float rainStrength, float thunderStrength) {
-        float f = 1.0F - rainStrength;
-        float f1 = rainStrength - thunderStrength;
+        final float alpha = 1.0F - rainStrength;
+        final float calculatedRainStrength = rainStrength - thunderStrength;
         float weatherAlpha = 0.0F;
         if (weatherConditions.contains(Weather.CLEAR)) {
-            weatherAlpha += f;
+            weatherAlpha += alpha;
         }
 
         if (weatherConditions.contains(Weather.RAIN)) {
-            weatherAlpha += f1;
+            weatherAlpha += calculatedRainStrength;
         }
 
         if (weatherConditions.contains(Weather.THUNDER)) {
