@@ -9,12 +9,14 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class SkyboxManager {
+public final class SkyboxManager {
     public static final SkyboxManager INSTANCE = new SkyboxManager();
 
     private final List<OptiFineSkybox> loadedSkyboxes = new ArrayList<>();
     private final List<OptiFineSkybox> activeSkyboxes = new LinkedList<>();
-    private final OptiFineSkyRenderer optiFineSkyRenderer = new OptiFineSkyRenderer();
+
+    private SkyboxManager() {
+    }
 
     public void addSkybox(OptiFineSkybox optiFineSkybox) {
         Preconditions.checkNotNull(optiFineSkybox, "Skybox was null");
@@ -22,7 +24,7 @@ public class SkyboxManager {
     }
 
     public void clearSkyboxes() {
-        Minecraft.getInstance().execute(this.optiFineSkyRenderer::clearCache);
+        Minecraft.getInstance().execute(OptiFineSkyRenderer.INSTANCE::clearCache);
         this.loadedSkyboxes.clear();
         this.activeSkyboxes.clear();
     }
@@ -46,9 +48,5 @@ public class SkyboxManager {
 
     public List<OptiFineSkybox> getActiveSkyboxes() {
         return this.activeSkyboxes;
-    }
-
-    public OptiFineSkyRenderer getOptiFineSkyRenderer() {
-        return optiFineSkyRenderer;
     }
 }

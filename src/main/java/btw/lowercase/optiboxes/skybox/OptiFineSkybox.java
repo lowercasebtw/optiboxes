@@ -44,14 +44,14 @@ public class OptiFineSkybox {
     }
 
     public float getConditionAlphaFor(OptiFineSkyLayer optiFineSkyLayer) {
-        return optiFineSkyLayerAlphaMap.getOrDefault(optiFineSkyLayer, -1.0F);
+        return this.optiFineSkyLayerAlphaMap.getOrDefault(optiFineSkyLayer, -1.0F);
     }
 
     public List<OptiFineSkyLayer> getLayers() {
-        return layers;
+        return this.layers;
     }
 
     public ResourceKey<Level> getWorldResourceKey() {
-        return worldResourceKey;
+        return this.worldResourceKey;
     }
 }

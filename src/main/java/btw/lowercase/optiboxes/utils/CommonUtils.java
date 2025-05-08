@@ -10,19 +10,41 @@ import com.mojang.serialization.Codec;
 import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.io.InputStream;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-public class CommonUtils {
+public final class CommonUtils {
     private static final Pattern OPTIFINE_RANGE_SEPARATOR = Pattern.compile("(\\d|\\))-(\\d|\\()");
 
-    public static @Nullable JsonObject convertOptiFineSkyProperties(SkyboxResourceHelper skyboxResourceHelper, Properties properties, ResourceLocation propertiesResourceLocation) {
+    public static final UVRange[] TEXTURE_UV_RANGE_FACES = new UVRange[]{
+            new UVRange(0, 0, 1.0F / 3.0F, 1.0F / 2.0F), // 0 (Bottom)
+            new UVRange(1.0F / 3.0F, 1.0F / 2.0F, 2.0F / 3.0F, 1), // 1 (North)
+            new UVRange(2.0F / 3.0F, 0, 1, 1.0F / 2.0F), // 2 (South)
+            new UVRange(1.0F / 3.0F, 0, 2.0F / 3.0F, 1.0F / 2.0F), // 3 (Top)
+            new UVRange(2.0F / 3.0F, 1.0F / 2.0F, 1, 1), // 4 (East)
+            new UVRange(0, 1.0F / 2.0F, 1.0F / 3.0F, 1) // 5 (West)
+    };
+
+    private static final Matrix4f[] MATRIX4F_ROTATED_FACES = new Matrix4f[]{
+            new Matrix4f(), // 0 (Bottom)
+            new Matrix4f().rotateX((float) Math.toRadians(90.0F)), // 1 (North)
+            new Matrix4f().rotateX((float) Math.toRadians(-90.0F)).rotateY((float) Math.toRadians(180.0F)), // 2 (South)
+            new Matrix4f().rotateX((float) Math.toRadians(180.0F)), // 3 (Top)
+            new Matrix4f().rotateZ((float) Math.toRadians(90.0F)).rotateY((float) Math.toRadians(-90.0F)), // 4 (East)
+            new Matrix4f().rotateZ((float) Math.toRadians(-90.0F)).rotateY((float) Math.toRadians(90.0F)) // 5 (West)
+    };
+
+    private CommonUtils() {
+    }
+
+    public static JsonObject convertOptiFineSkyProperties(SkyboxResourceHelper optiFineResourceHelper, Properties properties, ResourceLocation propertiesResourceLocation) {
         JsonObject jsonObject = new JsonObject();
-        ResourceLocation sourceTexture = parseSourceTexture(properties.getProperty("source", null), skyboxResourceHelper, propertiesResourceLocation);
+        ResourceLocation sourceTexture = parseSourceTexture(properties.getProperty("source", null), optiFineResourceHelper, propertiesResourceLocation);
         if (sourceTexture == null) {
             return null;
         } else {
@@ -164,10 +186,10 @@ public class CommonUtils {
         return jsonObject;
     }
 
-    public static @Nullable ResourceLocation parseSourceTexture(String source, SkyboxResourceHelper skyboxResourceHelper, ResourceLocation propertiesId) {
-        final ResourceLocation textureId;
-        final String namespace;
-        final String path;
+    public static ResourceLocation parseSourceTexture(String source, SkyboxResourceHelper optiFineResourceHelper, ResourceLocation propertiesId) {
+        ResourceLocation textureId;
+        String namespace;
+        String path;
         if (source == null) {
             namespace = propertiesId.getNamespace();
             path = propertiesId.getPath().replace(".properties", ".png");
@@ -199,7 +221,7 @@ public class CommonUtils {
             return null;
         }
 
-        final InputStream textureInputStream = skyboxResourceHelper.getInputStream(textureId);
+        InputStream textureInputStream = optiFineResourceHelper.getInputStream(textureId);
         if (textureInputStream == null) {
             return null;
         }
@@ -212,8 +234,8 @@ public class CommonUtils {
         return textureId;
     }
 
-    public static @Nullable Number toTickTime(String time) {
-        final String[] parts = time.split(":");
+    public static Number toTickTime(String time) {
+        String[] parts = time.split(":");
         if (parts.length == 2) {
             int h = Integer.parseInt(parts[0]);
             int m = Integer.parseInt(parts[1]);
@@ -245,7 +267,7 @@ public class CommonUtils {
         return rangeEntries;
     }
 
-    private static @Nullable Range parseRangeEntry(String part) {
+    private static Range parseRangeEntry(String part) {
         if (part != null) {
             if (part.contains("-")) {
                 String[] parts = part.split("-");
@@ -280,17 +302,17 @@ public class CommonUtils {
         return rangeEntries;
     }
 
-    private static @Nullable Range parseRangeEntryNegative(String part) {
+    private static Range parseRangeEntryNegative(String part) {
         if (part != null) {
             String s = OPTIFINE_RANGE_SEPARATOR.matcher(part).replaceAll("$1=$2");
             if (s.contains("=")) {
                 String[] parts = s.split("=");
                 if (parts.length == 2) {
-                    final int j = parseInt(stripBrackets(parts[0]), Integer.MIN_VALUE);
-                    final int k = parseInt(stripBrackets(parts[1]), Integer.MIN_VALUE);
+                    int j = parseInt(stripBrackets(parts[0]), Integer.MIN_VALUE);
+                    int k = parseInt(stripBrackets(parts[1]), Integer.MIN_VALUE);
                     if (j != Integer.MIN_VALUE && k != Integer.MIN_VALUE) {
-                        final int min = Math.min(j, k);
-                        final int max = Math.max(j, k);
+                        int min = Math.min(j, k);
+                        int max = Math.max(j, k);
                         return new Range(min, max);
                     }
                 }
@@ -345,12 +367,12 @@ public class CommonUtils {
         if (isInTimeInterval(currentTime, endFadeIn, startFadeOut)) {
             return maxAlpha;
         } else if (isInTimeInterval(currentTime, startFadeIn, endFadeIn)) {
-            final int fadeInDuration = calculateCyclicTimeDistance(startFadeIn, endFadeIn);
-            final int timePassedSinceFadeInStart = calculateCyclicTimeDistance(startFadeIn, currentTime);
+            int fadeInDuration = calculateCyclicTimeDistance(startFadeIn, endFadeIn);
+            int timePassedSinceFadeInStart = calculateCyclicTimeDistance(startFadeIn, currentTime);
             return minAlpha + ((float) timePassedSinceFadeInStart / fadeInDuration) * (maxAlpha - minAlpha);
         } else if (isInTimeInterval(currentTime, startFadeOut, endFadeOut)) {
-            final int fadeOutDuration = calculateCyclicTimeDistance(startFadeOut, endFadeOut);
-            final int timePassedSinceFadeOutStart = calculateCyclicTimeDistance(startFadeOut, currentTime);
+            int fadeOutDuration = calculateCyclicTimeDistance(startFadeOut, endFadeOut);
+            int timePassedSinceFadeOutStart = calculateCyclicTimeDistance(startFadeOut, currentTime);
             return maxAlpha + ((float) timePassedSinceFadeOutStart / fadeOutDuration) * (minAlpha - maxAlpha);
         } else {
             return minAlpha;
@@ -379,20 +401,20 @@ public class CommonUtils {
         if (min > max) {
             throw new UnsupportedOperationException("Maximum value was lesser than than the minimum value");
         } else {
-            return Codec.DOUBLE.xmap(value -> Mth.clamp(value, min, max), Function.identity());
+            return Codec.DOUBLE.xmap(f -> Mth.clamp(f, min, max), Function.identity());
         }
     }
 
     public static float getWeatherAlpha(List<Weather> weatherConditions, float rainStrength, float thunderStrength) {
-        final float alpha = 1.0F - rainStrength;
-        final float calculatedRainStrength = rainStrength - thunderStrength;
+        float f = 1.0F - rainStrength;
+        float f1 = rainStrength - thunderStrength;
         float weatherAlpha = 0.0F;
         if (weatherConditions.contains(Weather.CLEAR)) {
-            weatherAlpha += alpha;
+            weatherAlpha += f;
         }
 
         if (weatherConditions.contains(Weather.RAIN)) {
-            weatherAlpha += calculatedRainStrength;
+            weatherAlpha += f1;
         }
 
         if (weatherConditions.contains(Weather.THUNDER)) {
@@ -400,5 +422,29 @@ public class CommonUtils {
         }
 
         return Mth.clamp(weatherAlpha, 0.0F, 1.0F);
+    }
+
+    public static UVRange getUvRangeForFace(int face) {
+        if (face >= TEXTURE_UV_RANGE_FACES.length) {
+            throw new RuntimeException("Face is out of bounds");
+        } else {
+            return TEXTURE_UV_RANGE_FACES[face];
+        }
+    }
+
+    public static Matrix4f getRotationMatrixForFace(int face) {
+        if (face >= MATRIX4F_ROTATED_FACES.length) {
+            throw new RuntimeException("Face is out of bounds");
+        } else {
+            return MATRIX4F_ROTATED_FACES[face];
+        }
+    }
+
+    public static Vector3f getMatrixTransform(Matrix4f matrix4f, float x, float y, float z) {
+        return new Vector3f(
+                matrix4f.m00() * x + matrix4f.m10() * y + matrix4f.m20() * z + matrix4f.m30(),
+                matrix4f.m01() * x + matrix4f.m11() * y + matrix4f.m21() * z + matrix4f.m31(),
+                matrix4f.m02() * x + matrix4f.m12() * y + matrix4f.m22() * z + matrix4f.m32()
+        );
     }
 }

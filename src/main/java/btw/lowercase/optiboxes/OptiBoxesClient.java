@@ -2,17 +2,12 @@ package btw.lowercase.optiboxes;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import btw.lowercase.optiboxes.config.OptiBoxesConfigScreen;
-import btw.lowercase.optiboxes.mixins.RenderPipelinesAccessor;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
 import btw.lowercase.optiboxes.utils.SkyboxResourceHelper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.Command;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.api.ClientModInitializer;
@@ -33,7 +28,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class OptiBoxesClient implements ClientModInitializer {
+public final class OptiBoxesClient implements ClientModInitializer {
     public static OptiBoxesClient INSTANCE;
     public static final String MOD_ID = "optiboxes";
 
@@ -45,21 +40,6 @@ public class OptiBoxesClient implements ClientModInitializer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxes");
 
-    public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
-        RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelinesAccessor.getMatricesProjectionSnippet());
-        builder.withLocation(id("pipeline/custom_skybox"));
-        builder.withVertexShader(id("core/custom_skybox"));
-        builder.withFragmentShader(id("core/custom_skybox"));
-        builder.withDepthWrite(false);
-        builder.withColorWrite(true, false);
-        if (blendFunction != null) {
-            builder.withBlend(blendFunction);
-        }
-        builder.withSampler("Sampler0");
-        builder.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS);
-        return builder.build();
-    }
-
     public static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
@@ -70,32 +50,31 @@ public class OptiBoxesClient implements ClientModInitializer {
         OptiBoxesConfig.load();
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SkyboxResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(ClientCommandManager.literal(MOD_ID).executes((context) -> {
-                    Minecraft minecraft = Minecraft.getInstance();
-                    minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, OptiBoxesConfig.instance())));
-                    return Command.SINGLE_SUCCESS;
-                })));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(ClientCommandManager.literal("optiboxes").executes((context) -> {
+            Minecraft minecraft = Minecraft.getInstance();
+            minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, OptiBoxesConfig.instance())));
+            return Command.SINGLE_SUCCESS;
+        })));
     }
 
-    public void convert(SkyboxResourceHelper skyboxResourceHelper) {
+    public void convert(SkyboxResourceHelper managerAccessor) {
         if (OptiBoxesConfig.instance().processOptiFine) {
-            this.parseSkyboxes(skyboxResourceHelper, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
+            this.parseSkyboxes(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
 
         if (OptiBoxesConfig.instance().processMCPatcher) {
-            this.parseSkyboxes(skyboxResourceHelper, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
+            this.parseSkyboxes(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
         }
     }
 
-    private void parseSkyboxes(SkyboxResourceHelper skyboxResourceHelper, String skyParent, Pattern skyPattern) {
+    private void parseSkyboxes(SkyboxResourceHelper optiFineResourceHelper, String skyParent, Pattern skyPattern) {
         final JsonArray overworldLayers = new JsonArray();
         final JsonArray endLayers = new JsonArray();
-        skyboxResourceHelper.searchIn(skyParent)
+        optiFineResourceHelper.searchIn(skyParent)
                 .filter(id -> id.getPath().endsWith(".properties"))
                 .sorted(Comparator.comparing(ResourceLocation::getPath, (id1, id2) -> {
-                    Matcher matcherId1 = skyPattern.matcher(id1);
-                    Matcher matcherId2 = skyPattern.matcher(id2);
+                    final Matcher matcherId1 = skyPattern.matcher(id1);
+                    final Matcher matcherId2 = skyPattern.matcher(id2);
                     if (matcherId1.find() && matcherId2.find()) {
                         final int id1No = CommonUtils.parseInt(matcherId1.group("name").replace("sky", ""), -1);
                         final int id2No = CommonUtils.parseInt(matcherId2.group("name").replace("sky", ""), -1);
@@ -103,9 +82,9 @@ public class OptiBoxesClient implements ClientModInitializer {
                             return id1No - id2No;
                         }
                     }
+
                     return 0;
-                }))
-                .forEach(id -> {
+                })).forEach(id -> {
                     Matcher matcher = skyPattern.matcher(id.getPath());
                     if (matcher.find()) {
                         final String world = matcher.group("world");
@@ -120,7 +99,7 @@ public class OptiBoxesClient implements ClientModInitializer {
                             return;
                         }
 
-                        final InputStream inputStream = skyboxResourceHelper.getInputStream(id);
+                        final InputStream inputStream = optiFineResourceHelper.getInputStream(id);
                         if (inputStream == null) {
                             LOGGER.error("Error trying to read namespaced identifier: {}", id);
                             return;
@@ -140,12 +119,11 @@ public class OptiBoxesClient implements ClientModInitializer {
                             }
                         }
 
-                        final JsonObject json = CommonUtils.convertOptiFineSkyProperties(skyboxResourceHelper, properties, id);
+                        final JsonObject json = CommonUtils.convertOptiFineSkyProperties(optiFineResourceHelper, properties, id);
                         if (json != null) {
-                            if (world.equals("world0")) {
-                                overworldLayers.add(json);
-                            } else if (world.equals("world1")) {
-                                endLayers.add(json);
+                            switch (world) {
+                                case "world0" -> overworldLayers.add(json);
+                                case "world1" -> endLayers.add(json);
                             }
                         }
                     }

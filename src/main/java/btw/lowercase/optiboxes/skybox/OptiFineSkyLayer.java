@@ -8,7 +8,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.entity.Entity;
@@ -49,7 +48,7 @@ public record OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, 
                 return false;
             }
 
-            if (!(this.biomeInclusion && this.biomes.contains(level.registryAccess().lookupOrThrow(Registries.BIOME).getKey(currentBiome.value())))) {
+            if (!(this.biomeInclusion && this.biomes.contains(level.getBiome(cameraEntity.blockPosition()).unwrapKey().orElseThrow().location()))) {
                 return false;
             }
         }
@@ -58,16 +57,13 @@ public record OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, 
     }
 
     public float getPositionBrightness(Level level, float conditionAlpha) {
-        if (this.biomes().isEmpty() && this.heights().isEmpty()) {
+        if (this.biomes.isEmpty() && this.heights.isEmpty()) {
             return 1.0F;
+        } else if (conditionAlpha == -1.0F) {
+            return this.getConditionCheck(level) ? 1.0F : 0.0F;
+        } else {
+            return CommonUtils.calculateConditionAlphaValue(1.0F, 0.0F, conditionAlpha, (int) (this.transition * 20), this.getConditionCheck(level));
         }
-
-        if (conditionAlpha == -1.0F) {
-            boolean conditionCheck = this.getConditionCheck(level);
-            return conditionCheck ? 1.0F : 0.0F;
-        }
-
-        return CommonUtils.calculateConditionAlphaValue(1.0F, 0.0F, conditionAlpha, (int) (this.transition() * 20), this.getConditionCheck(level));
     }
 
     public boolean isActive(long dayTime, int clampedTimeOfDay) {
@@ -79,8 +75,8 @@ public record OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, 
                 adjustedTime += 24000L * (int) this.loop.days();
             }
 
-            int daysPassed = (int) (adjustedTime / 24000L);
-            int currentDay = daysPassed % (int) this.loop.days();
+            final int daysPassed = (int) (adjustedTime / 24000L);
+            final int currentDay = daysPassed % (int) this.loop.days();
             return CommonUtils.checkRanges(currentDay, this.loop.ranges());
         } else {
             return true;
