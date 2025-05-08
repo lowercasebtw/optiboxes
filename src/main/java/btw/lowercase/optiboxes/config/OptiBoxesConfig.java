@@ -1,45 +1,39 @@
 package btw.lowercase.optiboxes.config;
 
-import btw.lowercase.optiboxes.OptiBoxesClient;
-import dev.isxander.yacl3.api.ConfigCategory;
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.OptionDescription;
-import dev.isxander.yacl3.api.YetAnotherConfigLib;
-import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
-import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
-import dev.isxander.yacl3.config.v2.api.SerialEntry;
-import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
-import dev.isxander.yacl3.platform.YACLPlatform;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 
+//		"yet_another_config_lib_v3": ">=3.6.4",
 public class OptiBoxesConfig {
+    /*
     private static final ConfigClassHandler<OptiBoxesConfig> CONFIG =
             ConfigClassHandler.createBuilder(OptiBoxesConfig.class).serializer(config ->
                     GsonConfigSerializerBuilder.create(config)
                             .setPath(YACLPlatform.getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
                             .build()).build();
+    */
+    private static final OptiBoxesConfig CONFIG = new OptiBoxesConfig();
 
-    @SerialEntry
+    //@SerialEntry
     public boolean enabled = true;
 
-    @SerialEntry
+    //@SerialEntry
     public boolean processOptiFine = true;
 
-    @SerialEntry
+    //@SerialEntry
     public boolean processMCPatcher = false;
 
-    @SerialEntry
+    //@SerialEntry
     public boolean renderSunMoon = true;
 
-    @SerialEntry
+    //@SerialEntry
     public boolean renderStars = true;
 
-    @SerialEntry
+    //@SerialEntry
     public boolean showOverworldForUnknownDimension = true;
 
     public static Screen getConfigScreen(Screen parent) {
+        return null;
+        /*
         return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
             builder.title(Component.translatable("options.optiboxes.title"));
             ConfigCategory.Builder category = ConfigCategory.createBuilder();
@@ -93,13 +87,15 @@ public class OptiBoxesConfig {
             builder.category(category.build());
             return builder;
         }).generateScreen(parent);
+         */
     }
 
     public static void load() {
-        CONFIG.load();
+//        CONFIG.load();
     }
 
     public static OptiBoxesConfig instance() {
-        return CONFIG.instance();
+        return CONFIG;
+//        return CONFIG.instance();
     }
 }

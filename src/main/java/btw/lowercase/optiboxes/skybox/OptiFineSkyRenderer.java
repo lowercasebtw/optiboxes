@@ -9,7 +9,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
@@ -29,7 +29,7 @@ public class OptiFineSkyRenderer {
     private GpuBuffer skyBuffer;
     private RenderSystem.AutoStorageIndexBuffer skyBufferIndices;
     private int skyBufferIndexCount;
-    private final Map<ResourceLocation, GpuTexture> textureCache = new HashMap<>();
+    private final Map<ResourceLocation, GpuTextureView> textureCache = new HashMap<>();
     private final Map<ResourceLocation, RenderPipeline> renderPipelineCache = new HashMap<>();
 
     private BufferBuilder buildSky() {
@@ -66,18 +66,6 @@ public class OptiFineSkyRenderer {
         vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, 100.0F).setUv(u, v + 0.5F);
         vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, 100.0F).setUv(u + 0.33333334F, v + 0.5F);
         vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, -100.0F).setUv(u + 0.33333334F, v);
-    }
-
-    private float getAngle(Level level, float skyAngle, float speed) {
-        float angleDayStart = 0.0F;
-        if (speed != (float) Math.round(speed)) {
-            long currentWorldDay = (level.getDayTime() + 18000L) / 24000L;
-            double anglePerDay = speed % 1.0F;
-            double currentAngle = (double) currentWorldDay * anglePerDay;
-            angleDayStart = (float) (currentAngle % 1.0D);
-        }
-
-        return -360.0F * (angleDayStart + skyAngle * speed);
     }
 
     public void renderSkybox(OptiFineSkybox optiFineSkybox, Level level, float tickDelta) {
@@ -125,10 +113,10 @@ public class OptiFineSkyRenderer {
 
             RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
             GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
-            GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
+            GpuTextureView texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTextureView());
             try (RenderPass renderPass = RenderSystem.getDevice()
                     .createCommandEncoder()
-                    .createRenderPass(() -> "Custom Sky Rendering", renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
+                    .createRenderPass(() -> "Custom Sky Rendering", renderTarget.getColorTextureView(), OptionalInt.empty(), renderTarget.getDepthTextureView(), OptionalDouble.empty())) {
                 RenderPipeline renderPipeline = this.renderPipelineCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
                 renderPass.setPipeline(renderPipeline);
                 renderPass.setVertexBuffer(0, this.skyBuffer);
@@ -143,9 +131,22 @@ public class OptiFineSkyRenderer {
         }
     }
 
+    private float getAngle(Level level, float skyAngle, float speed) {
+        float angleDayStart = 0.0F;
+        if (speed != (float) Math.round(speed)) {
+            long currentWorldDay = (level.getDayTime() + 18000L) / 24000L;
+            double anglePerDay = speed % 1.0F;
+            double currentAngle = (double) currentWorldDay * anglePerDay;
+            angleDayStart = (float) (currentAngle % 1.0D);
+        }
+
+        return 360.0F * (angleDayStart + skyAngle * speed);
+    }
+
     public void clearCache() {
-        for (GpuTexture texture : this.textureCache.values()) {
-            texture.close();
+        for (GpuTextureView textureView : this.textureCache.values()) {
+            textureView.texture().close();
+            textureView.close();
         }
 
         this.textureCache.clear();

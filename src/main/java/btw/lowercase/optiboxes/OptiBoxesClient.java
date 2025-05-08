@@ -46,19 +46,21 @@ public class OptiBoxesClient implements ClientModInitializer {
 
     public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
         RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelinesAccessor.getMatricesProjectionSnippet());
-        builder.withLocation(ResourceLocation.fromNamespaceAndPath("optiboxes", "pipeline/custom_sky"));
-        builder.withVertexShader("core/position_tex");
-        builder.withFragmentShader("core/position_tex");
+        builder.withLocation(id("pipeline/custom_skybox"));
+        builder.withVertexShader(id("core/custom_skybox"));
+        builder.withFragmentShader(id("core/custom_skybox"));
         builder.withDepthWrite(false);
         builder.withColorWrite(true, false);
         if (blendFunction != null) {
             builder.withBlend(blendFunction);
-        } else {
-            builder.withoutBlend();
         }
         builder.withSampler("Sampler0");
         builder.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS);
         return builder.build();
+    }
+
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
     @Override
@@ -68,7 +70,7 @@ public class OptiBoxesClient implements ClientModInitializer {
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SkyboxResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                dispatcher.register(ClientCommandManager.literal("optiboxes").executes((context) -> {
+                dispatcher.register(ClientCommandManager.literal(MOD_ID).executes((context) -> {
                     Minecraft minecraft = Minecraft.getInstance();
                     minecraft.schedule(() -> minecraft.setScreen(OptiBoxesConfig.getConfigScreen(minecraft.screen)));
                     return Command.SINGLE_SUCCESS;
