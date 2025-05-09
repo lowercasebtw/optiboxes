@@ -1,5 +1,8 @@
 package btw.lowercase.optiboxes.config;
 
+import btw.lowercase.optiboxes.OptiBoxesClient;
+import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
+import btw.lowercase.lightconfig.lib.field.ConfigField;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
@@ -13,13 +16,13 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 import java.util.function.BiFunction;
-import java.util.function.BooleanSupplier;
 
 public class OptiBoxesConfigScreen extends Screen {
-    private static final Component TITLE = Component.translatable("options.optiboxes.title");
-    private static final BiFunction<Component, Component, Component> TEMPLATE = (a, b) -> Component.translatable("options.optiboxes.template", a, b);
-    private static final Component ON = Component.translatable("options.optiboxes.on");
-    private static final Component OFF = Component.translatable("options.optiboxes.off");
+    private static final String PREFIX = "options.optiboxes.";
+    private static final Component TITLE = Component.translatable(PREFIX + "title");
+    private static final BiFunction<Component, Component, Component> TEMPLATE = (a, b) -> Component.translatable(PREFIX + "template", a, b);
+    private static final Component ON = Component.translatable(PREFIX + "on");
+    private static final Component OFF = Component.translatable(PREFIX + "off");
 
     private static Component tooltip(String translate) {
         return Component.translatable(translate + ".tooltip");
@@ -46,47 +49,13 @@ public class OptiBoxesConfigScreen extends Screen {
         gridLayout.defaultCellSetting().paddingHorizontal(4).paddingBottom(4).alignHorizontallyCenter();
         GridLayout.RowHelper rowHelper = gridLayout.createRowHelper(2);
 
-        rowHelper.addChild(createConfigButton(
-                "options.optiboxes.enabled",
-                () -> config.enabled = !config.enabled,
-                () -> config.enabled
-        ));
-
-        rowHelper.addChild(createConfigButton(
-                "options.optiboxes.showOverworldForUnknownDimension",
-                () -> config.showOverworldForUnknownDimension = !config.showOverworldForUnknownDimension,
-                () -> config.showOverworldForUnknownDimension
-        ));
-
-        rowHelper.addChild(createConfigButton(
-                "options.optiboxes.processOptiFine",
-                () -> {
-                    config.processOptiFine = !config.processOptiFine;
-                    this.minecraft.reloadResourcePacks();
-                },
-                () -> config.processOptiFine
-        ));
-
-        rowHelper.addChild(createConfigButton(
-                "options.optiboxes.processMCPatcher",
-                () -> {
-                    config.processMCPatcher = !config.processMCPatcher;
-                    this.minecraft.reloadResourcePacks();
-                },
-                () -> config.processMCPatcher
-        ));
-
-        rowHelper.addChild(createConfigButton(
-                "options.optiboxes.renderSunMoon",
-                () -> config.renderSunMoon = !config.renderSunMoon,
-                () -> config.renderSunMoon
-        ));
-
-        rowHelper.addChild(createConfigButton(
-                "options.optiboxes.renderStars",
-                () -> config.renderStars = !config.renderStars,
-                () -> config.renderStars
-        ));
+        // Didn't iterate fields here cause I wanted custom order
+        rowHelper.addChild(createConfigButton(config.enabled));
+        rowHelper.addChild(createConfigButton(config.showOverworldForUnknownDimension));
+        rowHelper.addChild(createConfigButton(config.processOptiFine, () -> this.minecraft.reloadResourcePacks()));
+        rowHelper.addChild(createConfigButton(config.processMCPatcher, () -> this.minecraft.reloadResourcePacks()));
+        rowHelper.addChild(createConfigButton(config.renderSunMoon));
+        rowHelper.addChild(createConfigButton(config.renderStars));
 
         layout.addToContents(gridLayout);
         layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, (button) -> this.onClose()).width(200).build());
@@ -94,14 +63,25 @@ public class OptiBoxesConfigScreen extends Screen {
         layout.arrangeElements();
     }
 
-    private Button createConfigButton(String translate, Runnable toggle, BooleanSupplier value) {
-        Component name = Component.translatable(translate);
-        Button.Builder builder = Button.builder(TEMPLATE.apply(name, value.getAsBoolean() ? ON : OFF), (button) -> {
-            toggle.run();
-            button.setMessage(TEMPLATE.apply(name, value.getAsBoolean() ? ON : OFF));
+    private Button createConfigButton(ConfigField<?> configField, Runnable onClick) {
+        if (configField instanceof BooleanConfigField booleanConfigField) {
+            final String translate = PREFIX + configField.getName();
+            Component name = Component.translatable(translate);
+            Button.Builder builder = Button.builder(TEMPLATE.apply(name, booleanConfigField.isEnabled() ? ON : OFF), (button) -> {
+                booleanConfigField.toggle();
+                onClick.run();
+                button.setMessage(TEMPLATE.apply(name, booleanConfigField.isEnabled() ? ON : OFF));
+            });
+            builder.tooltip(Tooltip.create(tooltip(translate)));
+            return builder.build();
+        } else {
+            throw new RuntimeException("TODO: Support other config field types when creating a button.");
+        }
+    }
+
+    private Button createConfigButton(ConfigField<?> configField) {
+        return this.createConfigButton(configField, () -> {
         });
-        builder.tooltip(Tooltip.create(tooltip(translate)));
-        return builder.build();
     }
 
     @Override
@@ -113,7 +93,7 @@ public class OptiBoxesConfigScreen extends Screen {
     @Override
     public void onClose() {
         if (this.minecraft != null) {
-            OptiBoxesConfig.save();
+            OptiBoxesClient.getConfig().save();
             this.minecraft.setScreen(parent);
         }
     }

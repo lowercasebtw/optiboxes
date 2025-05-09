@@ -1,5 +1,6 @@
 package btw.lowercase.optiboxes.skybox;
 
+import btw.lowercase.optiboxes.OptiBoxesClient;
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
@@ -31,7 +32,7 @@ public class OptiFineSkybox {
 
     public void tick(ClientLevel level) {
         this.active = true;
-        if (level.dimension().equals(this.worldResourceKey) || (OptiBoxesConfig.instance().showOverworldForUnknownDimension && this.worldResourceKey.equals(Level.OVERWORLD) && !level.dimension().equals(Level.NETHER) && !level.dimension().equals(Level.END))) {
+        if (level.dimension().equals(this.worldResourceKey) || (OptiBoxesClient.getConfig().showOverworldForUnknownDimension.isEnabled() && this.worldResourceKey.equals(Level.OVERWORLD) && !level.dimension().equals(Level.NETHER) && !level.dimension().equals(Level.END))) {
             this.layers.forEach(layer -> optiFineSkyLayerAlphaMap.put(layer, layer.getPositionBrightness(level, this.getConditionAlphaFor(layer))));
         } else {
             this.layers.forEach(layer -> optiFineSkyLayerAlphaMap.put(layer, -1.0F));
