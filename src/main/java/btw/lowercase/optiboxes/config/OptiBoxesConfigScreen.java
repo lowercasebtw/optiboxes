@@ -105,9 +105,9 @@ public class OptiBoxesConfigScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        super.renderBackground(guiGraphics, i, j, f);
-        super.render(guiGraphics, i, j, f);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float tickDelta) {
+        super.renderBackground(guiGraphics, mouseX, mouseY, tickDelta);
+        super.render(guiGraphics, mouseX, mouseY, tickDelta);
     }
 
     @Override
