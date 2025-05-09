@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -38,32 +39,38 @@ public final class OptiBoxesClient implements ClientModInitializer {
     private static final String MCPATCHER_SKY_PARENT = "mcpatcher/sky";
     private static final Pattern MCPATCHER_SKY_PATTERN = Pattern.compile("mcpatcher/sky/" + SKY_PATTERN_ENDING);
 
+    private static OptiBoxesConfig CONFIG_INSTANCE;
     private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxes");
 
     public static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
+    public static OptiBoxesConfig getConfig() {
+        return CONFIG_INSTANCE;
+    }
+
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
-        OptiBoxesConfig.load();
+        CONFIG_INSTANCE = new OptiBoxesConfig(FabricLoader.getInstance().getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"));
+        CONFIG_INSTANCE.load();
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SkyboxResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
                 dispatcher.register(ClientCommandManager.literal(MOD_ID).executes((context) -> {
                     Minecraft minecraft = Minecraft.getInstance();
-                    minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, OptiBoxesConfig.instance())));
+                    minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, CONFIG_INSTANCE)));
                     return Command.SINGLE_SUCCESS;
                 })));
     }
 
     public void convert(SkyboxResourceHelper managerAccessor) {
-        if (OptiBoxesConfig.instance().processOptiFine) {
+        if (CONFIG_INSTANCE.processOptiFine.isEnabled()) {
             this.parseSkyboxes(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
 
-        if (OptiBoxesConfig.instance().processMCPatcher) {
+        if (CONFIG_INSTANCE.processMCPatcher.isEnabled()) {
             this.parseSkyboxes(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
         }
     }
