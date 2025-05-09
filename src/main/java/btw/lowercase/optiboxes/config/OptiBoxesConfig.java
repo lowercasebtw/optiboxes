@@ -1,107 +1,81 @@
 package btw.lowercase.optiboxes.config;
 
 import btw.lowercase.optiboxes.OptiBoxesClient;
-import dev.isxander.yacl3.api.ConfigCategory;
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.OptionDescription;
-import dev.isxander.yacl3.api.YetAnotherConfigLib;
-import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
-import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
-import dev.isxander.yacl3.config.v2.api.SerialEntry;
-import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
-import dev.isxander.yacl3.platform.YACLPlatform;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
+import btw.lowercase.optiboxes.utils.CommonUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.Strictness;
+import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class OptiBoxesConfig {
-    private static final ConfigClassHandler<OptiBoxesConfig> CONFIG =
-            ConfigClassHandler.createBuilder(OptiBoxesConfig.class).serializer(config ->
-                    GsonConfigSerializerBuilder.create(config)
-                            .setPath(YACLPlatform.getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"))
-                            .build()).build();
+    private static OptiBoxesConfig instance;
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setStrictness(Strictness.STRICT).create();
+    private static final Path CONFIG_FILE_PATH = FabricLoader.getInstance().getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json");
+    private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxesConfig");
+    private static final OptiBoxesConfig DEFAULTS = new OptiBoxesConfig();
 
-    @SerialEntry
     public boolean enabled = true;
-
-    @SerialEntry
     public boolean processOptiFine = true;
-
-    @SerialEntry
     public boolean processMCPatcher = false;
-
-    @SerialEntry
     public boolean renderSunMoon = true;
-
-    @SerialEntry
     public boolean renderStars = true;
-
-    @SerialEntry
     public boolean showOverworldForUnknownDimension = true;
 
-    public static Screen getConfigScreen(Screen parent) {
-        return YetAnotherConfigLib.create(CONFIG, (defaults, config, builder) -> {
-            builder.title(Component.translatable("options.optiboxes.title"));
+    public static void load() {
+        instance = new OptiBoxesConfig();
+        if (!CONFIG_FILE_PATH.toFile().exists()) {
+            LOGGER.info("Config file doesn't exist! Creating one...");
+            save();
+            return;
+        }
 
-            ConfigCategory.Builder category = ConfigCategory.createBuilder();
-            category.name(Component.translatable("options.optiboxes.title"));
-            Minecraft minecraft = Minecraft.getInstance();
-            category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.enabled"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.enabled.tooltip")))
-                    .binding(defaults.enabled, () -> config.enabled, (newVal) -> {
-                        config.enabled = newVal;
-                        minecraft.reloadResourcePacks();
-                    })
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.process_optifine"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.process_optifine.tooltip")))
-                    .binding(defaults.processOptiFine, () -> config.processOptiFine, (newVal) -> {
-                        config.processOptiFine = newVal;
-                        minecraft.reloadResourcePacks();
-                    })
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.process_mcpatcher"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.process_mcpatcher.tooltip")))
-                    .binding(defaults.processMCPatcher, () -> config.processMCPatcher, (newVal) -> {
-                        config.processMCPatcher = newVal;
-                        minecraft.reloadResourcePacks();
-                    })
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.render_sun_moon"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.render_sun_moon.tooltip")))
-                    .binding(defaults.renderSunMoon, () -> config.renderSunMoon, (newVal) -> config.renderSunMoon = newVal)
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.render_stars"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.render_stars.tooltip")))
-                    .binding(defaults.renderStars, () -> config.renderStars, (newVal) -> config.renderStars = newVal)
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            category.option(Option.<Boolean>createBuilder()
-                    .name(Component.translatable("options.optiboxes.show_overworld_for_unknown_dimension"))
-                    .description(OptionDescription.of(Component.translatable("options.optiboxes.show_overworld_for_unknown_dimension.tooltip")))
-                    .binding(defaults.renderStars, () -> config.showOverworldForUnknownDimension, (newVal) -> config.showOverworldForUnknownDimension = newVal)
-                    .controller(TickBoxControllerBuilder::create)
-                    .build());
-            builder.category(category.build());
+        try {
+            String json = Files.readString(CONFIG_FILE_PATH);
+            JsonObject object = GSON.fromJson(json, JsonObject.class);
+            if (object == null) {
+                LOGGER.warn("Failed to load config! Defaulting to original settings.");
+            } else {
+                instance.enabled = CommonUtils.getBooleanOr(object, "enabled", DEFAULTS.enabled);
+                instance.processOptiFine = CommonUtils.getBooleanOr(object, "processOptiFine", DEFAULTS.processOptiFine);
+                instance.processMCPatcher = CommonUtils.getBooleanOr(object, "processMCPatcher", DEFAULTS.processMCPatcher);
+                instance.renderSunMoon = CommonUtils.getBooleanOr(object, "renderSunMoon", DEFAULTS.renderSunMoon);
+                instance.renderStars = CommonUtils.getBooleanOr(object, "renderStars", DEFAULTS.renderStars);
+                instance.showOverworldForUnknownDimension = CommonUtils.getBooleanOr(object, "showOverworldForUnknownDimension", DEFAULTS.showOverworldForUnknownDimension);
+            }
+        } catch (Exception ignored) {
+            LOGGER.warn("Failed to load config! Error occured when reading file.");
+            return;
+        }
 
-            return builder;
-        }).generateScreen(parent);
+        LOGGER.info("Config successfully loaded!");
     }
 
-    public static void load() {
-        CONFIG.load();
+    public static void save() {
+        JsonObject object = new JsonObject();
+        object.addProperty("enabled", instance.enabled);
+        object.addProperty("processOptiFine", instance.processOptiFine);
+        object.addProperty("processMCPatcher", instance.processMCPatcher);
+        object.addProperty("renderSunMoon", instance.renderSunMoon);
+        object.addProperty("renderStars", instance.renderStars);
+        object.addProperty("showOverworldForUnknownDimension", instance.showOverworldForUnknownDimension);
+
+        try {
+            Files.write(CONFIG_FILE_PATH, GSON.toJson(object).getBytes());
+        } catch (Exception ignored) {
+            LOGGER.warn("Failed to save config!");
+            return;
+        }
+
+        LOGGER.info("Config successfully saved!");
     }
 
     public static OptiBoxesConfig instance() {
-        return CONFIG.instance();
+        return instance;
     }
 }

@@ -2,70 +2,132 @@ package btw.lowercase.optiboxes.skybox;
 
 import btw.lowercase.optiboxes.OptiBoxesClient;
 import btw.lowercase.optiboxes.utils.CommonUtils;
+import btw.lowercase.optiboxes.utils.UVRange;
 import btw.lowercase.optiboxes.utils.components.Blend;
 import com.mojang.blaze3d.buffers.BufferType;
 import com.mojang.blaze3d.buffers.BufferUsage;
 import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import org.joml.AxisAngle4f;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
+import org.joml.Quaternionf;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
-public class OptiFineSkyRenderer {
+public final class OptiFineSkyRenderer {
+    public static final OptiFineSkyRenderer INSTANCE = new OptiFineSkyRenderer();
+
     private GpuBuffer skyBuffer;
     private RenderSystem.AutoStorageIndexBuffer skyBufferIndices;
     private int skyBufferIndexCount;
     private final Map<ResourceLocation, GpuTexture> textureCache = new HashMap<>();
     private final Map<ResourceLocation, RenderPipeline> renderPipelineCache = new HashMap<>();
 
-    private BufferBuilder buildSky() {
-        ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(DefaultVertexFormat.POSITION_TEX.getVertexSize() * 24);
-        BufferBuilder builder = new BufferBuilder(byteBufferBuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        PoseStack poseStack = new PoseStack();
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(-90.0F));
-        this.renderSide(poseStack, builder, 4);
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 1);
-        poseStack.popPose();
-        poseStack.pushPose();
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
-        this.renderSide(poseStack, builder, 0);
-        poseStack.popPose();
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 5);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 2);
-        poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
-        this.renderSide(poseStack, builder, 3);
-        poseStack.popPose();
-        return builder;
+    private OptiFineSkyRenderer() {
+        Minecraft.getInstance().schedule(this::buildSky);
     }
 
-    private void renderSide(PoseStack poseStack, VertexConsumer vertexConsumer, int side) {
-        float u = (float) (side % 3) / 3.0F;
-        float v = (float) (side / 3) / 2.0F;
-        Matrix4f matrix4f = poseStack.last().pose();
-        vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, -100.0F).setUv(u, v);
-        vertexConsumer.addVertex(matrix4f, -100.0F, -100.0F, 100.0F).setUv(u, v + 0.5F);
-        vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, 100.0F).setUv(u + 0.33333334F, v + 0.5F);
-        vertexConsumer.addVertex(matrix4f, 100.0F, -100.0F, -100.0F).setUv(u + 0.33333334F, v);
+    private void buildSky() {
+        VertexFormat vertexFormat = DefaultVertexFormat.POSITION_TEX;
+        VertexFormat.Mode vertexFormatMode = VertexFormat.Mode.QUADS;
+
+        ByteBufferBuilder byteBufferBuilder = new ByteBufferBuilder(vertexFormat.getVertexSize() * 24);
+        BufferBuilder builder = new BufferBuilder(byteBufferBuilder, vertexFormatMode, vertexFormat);
+        for (int face = 0; face < 6; ++face) {
+            UVRange uvRange = CommonUtils.getUvRangeForFace(face);
+            Matrix4f matrix4f = CommonUtils.getRotationMatrixForFace(face);
+            final float quadSize = 100.0F;
+            builder.addVertex(CommonUtils.getMatrixTransform(matrix4f, -quadSize, -quadSize, -quadSize)).setUv(uvRange.minU(), uvRange.minV());
+            builder.addVertex(CommonUtils.getMatrixTransform(matrix4f, -quadSize, -quadSize, quadSize)).setUv(uvRange.minU(), uvRange.maxV());
+            builder.addVertex(CommonUtils.getMatrixTransform(matrix4f, quadSize, -quadSize, quadSize)).setUv(uvRange.maxU(), uvRange.maxV());
+            builder.addVertex(CommonUtils.getMatrixTransform(matrix4f, quadSize, -quadSize, -quadSize)).setUv(uvRange.maxU(), uvRange.minV());
+        }
+
+        skyBufferIndices = RenderSystem.getSequentialBuffer(vertexFormatMode);
+        try (MeshData meshData = builder.build()) {
+            if (meshData != null) {
+                skyBufferIndexCount = meshData.drawState().indexCount();
+                skyBuffer = RenderSystem.getDevice().createBuffer(() -> "OptiFine skybox", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
+            }
+        }
+    }
+
+    public static RenderPipeline getCustomSkyPipeline(BlendFunction blendFunction) {
+        RenderPipeline.Builder builder = RenderPipeline.builder(RenderPipelines.MATRICES_COLOR_SNIPPET);
+        builder.withLocation(OptiBoxesClient.id("pipeline/custom_skybox"));
+        builder.withVertexShader(OptiBoxesClient.id("core/custom_skybox"));
+        builder.withFragmentShader(OptiBoxesClient.id("core/custom_skybox"));
+        builder.withDepthWrite(false);
+        builder.withColorWrite(true, false);
+        if (blendFunction != null) {
+            builder.withBlend(blendFunction);
+        }
+        builder.withSampler("Sampler0");
+        builder.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS);
+        return builder.build();
+    }
+
+    public void renderSkybox(OptiFineSkybox optiFineSkybox, Matrix4fStack modelViewStack, Level level, float tickDelta) {
+        long dayTime = level.getDayTime();
+        int clampedTimeOfDay = (int) (dayTime % 24000L);
+        float skyAngle = level.getTimeOfDay(tickDelta);
+        float thunderLevel = level.getThunderLevel(tickDelta);
+        float rainLevel = level.getRainLevel(tickDelta);
+        if (rainLevel > 0.0F) {
+            thunderLevel /= rainLevel;
+        }
+
+        for (OptiFineSkyLayer optiFineSkyLayer : optiFineSkybox.getLayers().stream().filter(layer -> layer.isActive(dayTime, clampedTimeOfDay)).toList()) {
+            renderSkyLayer(optiFineSkyLayer, modelViewStack, level, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel, optiFineSkybox.getConditionAlphaFor(optiFineSkyLayer));
+        }
+
+        Blend.ADD.apply(1.0F - rainLevel);
+    }
+
+    public void renderSkyLayer(OptiFineSkyLayer optiFineSkyLayer, Matrix4fStack modelViewStack, Level level, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient, float conditionAlpha) {
+        float weatherAlpha = CommonUtils.getWeatherAlpha(optiFineSkyLayer.weatherConditions(), rainGradient, thunderGradient);
+        float fadeAlpha = optiFineSkyLayer.fade().getAlpha(timeOfDay);
+        float finalAlpha = Mth.clamp(conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
+        if (!(finalAlpha < 1.0E-4F)) {
+            modelViewStack.pushMatrix();
+            if (optiFineSkyLayer.rotate()) {
+                // NOTE: Using `mulPose` directly gives a different result.
+                final float angle = this.getAngle(level, skyAngle, optiFineSkyLayer.speed());
+                modelViewStack.rotate(new Quaternionf(new AxisAngle4f((float) Math.toRadians(angle), optiFineSkyLayer.axis())));
+            }
+
+            optiFineSkyLayer.blend().apply(finalAlpha);
+            RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
+            GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
+            GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
+            try (RenderPass renderPass = RenderSystem.getDevice()
+                    .createCommandEncoder()
+                    .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
+                RenderPipeline renderPipeline = this.renderPipelineCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
+                renderPass.setPipeline(renderPipeline);
+                renderPass.setVertexBuffer(0, this.skyBuffer);
+                renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
+                renderPass.bindSampler("Sampler0", texture);
+                renderPass.drawIndexed(0, this.skyBufferIndexCount);
+            }
+
+            modelViewStack.popMatrix();
+        }
     }
 
     private float getAngle(Level level, float skyAngle, float speed) {
@@ -78,66 +140,6 @@ public class OptiFineSkyRenderer {
         }
 
         return 360.0F * (angleDayStart + skyAngle * speed);
-    }
-
-    public void renderSkybox(OptiFineSkybox optiFineSkybox, PoseStack poseStack, Level level, float tickDelta) {
-        if (this.skyBuffer == null) {
-            try (MeshData meshData = this.buildSky().buildOrThrow()) {
-                this.skyBufferIndexCount = meshData.drawState().indexCount();
-                this.skyBuffer = RenderSystem.getDevice().createBuffer(() -> "Custom Sky", BufferType.VERTICES, BufferUsage.STATIC_WRITE, meshData.vertexBuffer());
-            }
-        }
-
-        if (this.skyBufferIndices == null) {
-            this.skyBufferIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
-        }
-
-        long dayTime = level.getDayTime();
-        int clampedTimeOfDay = (int) (dayTime % 24000L);
-        float skyAngle = level.getTimeOfDay(tickDelta);
-        float thunderLevel = level.getThunderLevel(tickDelta);
-        float rainLevel = level.getRainLevel(tickDelta);
-        if (rainLevel > 0.0F) {
-            thunderLevel /= rainLevel;
-        }
-
-        for (OptiFineSkyLayer optiFineSkyLayer : optiFineSkybox.getLayers().stream().filter(layer -> layer.isActive(dayTime, clampedTimeOfDay)).toList()) {
-            renderSkyLayer(optiFineSkyLayer, level, poseStack, clampedTimeOfDay, skyAngle, rainLevel, thunderLevel, optiFineSkybox.getConditionAlphaFor(optiFineSkyLayer));
-        }
-
-        Blend.ADD.apply(1.0F - rainLevel);
-    }
-
-    public void renderSkyLayer(OptiFineSkyLayer optiFineSkyLayer, Level level, PoseStack poseStack, int timeOfDay, float skyAngle, float rainGradient, float thunderGradient, float conditionAlpha) {
-        float weatherAlpha = CommonUtils.getWeatherAlpha(optiFineSkyLayer.weatherConditions(), rainGradient, thunderGradient);
-        float fadeAlpha = optiFineSkyLayer.fade().getAlpha(timeOfDay);
-        float finalAlpha = Mth.clamp(conditionAlpha * weatherAlpha * fadeAlpha, 0.0F, 1.0F);
-        if (!(finalAlpha < 1.0E-4F)) {
-            poseStack.pushPose();
-            if (optiFineSkyLayer.rotate()) {
-                poseStack.mulPose(Axis.of(optiFineSkyLayer.axis()).rotationDegrees(this.getAngle(level, skyAngle, optiFineSkyLayer.speed())));
-            }
-
-            optiFineSkyLayer.blend().apply(finalAlpha);
-            Matrix4fStack matrix4fStack = RenderSystem.getModelViewStack();
-            matrix4fStack.pushMatrix();
-            matrix4fStack.mul(poseStack.last().pose());
-            RenderTarget renderTarget = Minecraft.getInstance().getMainRenderTarget();
-            GpuBuffer indexBuffer = this.skyBufferIndices.getBuffer(this.skyBufferIndexCount);
-            GpuTexture texture = this.textureCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> Minecraft.getInstance().getTextureManager().getTexture(resourceLocation).getTexture());
-            try (RenderPass renderPass = RenderSystem.getDevice()
-                    .createCommandEncoder()
-                    .createRenderPass(renderTarget.getColorTexture(), OptionalInt.empty(), renderTarget.getDepthTexture(), OptionalDouble.empty())) {
-                RenderPipeline renderPipeline = this.renderPipelineCache.computeIfAbsent(optiFineSkyLayer.source(), (resourceLocation) -> OptiBoxesClient.getCustomSkyPipeline(optiFineSkyLayer.blend().getBlendFunction()));
-                renderPass.setPipeline(renderPipeline);
-                renderPass.setVertexBuffer(0, this.skyBuffer);
-                renderPass.setIndexBuffer(indexBuffer, this.skyBufferIndices.type());
-                renderPass.bindSampler("Sampler0", texture);
-                renderPass.drawIndexed(0, this.skyBufferIndexCount);
-            }
-            matrix4fStack.popMatrix();
-            poseStack.popPose();
-        }
     }
 
     public void clearCache() {

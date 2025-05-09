@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
-public class OptiFineResourceHelper implements IdentifiableResourceReloadListener {
+public class SkyboxResourceHelper implements IdentifiableResourceReloadListener {
     private ResourceManager resourceManager;
 
     @Override
@@ -32,7 +32,7 @@ public class OptiFineResourceHelper implements IdentifiableResourceReloadListene
 
     @Override
     public ResourceLocation getFabricId() {
-        return ResourceLocation.tryBuild(OptiBoxesClient.MOD_ID, "skybox_reader");
+        return OptiBoxesClient.id("skybox_reader");
     }
 
     public Stream<ResourceLocation> searchIn(String parent) {

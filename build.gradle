@@ -39,9 +39,6 @@ dependencies {
     // Fabric API - Needs to be specified, otherwise an older version might be defaulted and cause issues.
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
 
-    // YACL
-    modImplementation("dev.isxander:yet-another-config-lib:${project.yacl_version}")
-
     // Mod Menu
     modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}") {
         exclude group: 'net.fabricmc.fabric-api'

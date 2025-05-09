@@ -1,18 +1,20 @@
 package btw.lowercase.optiboxes.mixins;
 
+import btw.lowercase.optiboxes.skybox.OptiFineSkyRenderer;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.*;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,33 +36,27 @@ public abstract class MixinLevelRenderer {
     @Nullable
     private ClientLevel level;
 
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-
-    // TODO/NOTE: Had to use this, because I couldn't access the tickDelta value from outside the lambda
     @Unique
-    private float getTickDelta() {
-        DeltaTracker deltaTracker = this.minecraft.getDeltaTracker();
-        if (this.level == null) {
-            return deltaTracker.getGameTimeDeltaPartialTick(false);
-        } else {
-            return deltaTracker.getGameTimeDeltaPartialTick(!this.level.tickRateManager().runsNormally());
-        }
+    private float optiboxes$tickDelta;
+
+    @Inject(method = "addSkyPass", at = @At("HEAD"))
+    private void optiboxes$getLocals(FrameGraphBuilder frameGraphBuilder, Camera camera, float tickDelta, FogParameters fogParameters, CallbackInfo ci) {
+        this.optiboxes$tickDelta = tickDelta;
     }
 
     @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderEndSky()V"))
     private void optiboxes$renderEndSkybox(SkyRenderer instance, Operation<Void> original) {
-        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        boolean isEnabled = SkyboxManager.INSTANCE.isEnabled(this.level);
         original.call(instance);
-        if (isEnabled) {
-            PoseStack poseStack = new PoseStack();
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+        if (SkyboxManager.INSTANCE.isEnabled(this.level)) {
+            List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
+            ClientLevel clientLevel = Objects.requireNonNull(this.level);
+            Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+            modelViewStack.pushMatrix();
+            modelViewStack.rotate(Axis.YP.rotationDegrees(-90.0F));
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                SkyboxManager.INSTANCE.getOptiFineSkyRenderer().renderSkybox(optiFineSkybox, poseStack, Objects.requireNonNull(this.level), 0.0F);
+                OptiFineSkyRenderer.INSTANCE.renderSkybox(optiFineSkybox, modelViewStack, clientLevel, 0.0F);
             }
-
+            modelViewStack.popMatrix();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         }
     }
@@ -75,16 +71,16 @@ public abstract class MixinLevelRenderer {
 
     @WrapOperation(method = "method_62215", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SkyRenderer;renderSunMoonAndStars(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;FIFFLnet/minecraft/client/renderer/FogParameters;)V"))
     private void optiboxes$renderSkyboxes(SkyRenderer instance, PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float timeOfDay, int moonPhases, float rainLevel, float starBrightness, FogParameters fogParameters, Operation<Void> original) {
-        List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
-        boolean isEnabled = SkyboxManager.INSTANCE.isEnabled(this.level);
-        if (isEnabled) {
+        if (SkyboxManager.INSTANCE.isEnabled(this.level)) {
+            List<OptiFineSkybox> activeSkyboxes = SkyboxManager.INSTANCE.getActiveSkyboxes();
             ClientLevel clientLevel = Objects.requireNonNull(this.level);
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
+            Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+            modelViewStack.pushMatrix();
+            modelViewStack.rotate(Axis.YP.rotationDegrees(-90.0F));
             for (OptiFineSkybox optiFineSkybox : activeSkyboxes) {
-                SkyboxManager.INSTANCE.getOptiFineSkyRenderer().renderSkybox(optiFineSkybox, poseStack, clientLevel, getTickDelta());
+                OptiFineSkyRenderer.INSTANCE.renderSkybox(optiFineSkybox, modelViewStack, clientLevel, this.optiboxes$tickDelta);
             }
-            poseStack.popPose();
+            modelViewStack.popMatrix();
         }
 
         original.call(instance, poseStack, bufferSource, timeOfDay, moonPhases, rainLevel, starBrightness, fogParameters);
