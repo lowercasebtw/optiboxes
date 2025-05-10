@@ -10,14 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class OptiBoxesConfig extends Config {
-    private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxesConfig");
+    private static final Logger LOGGER = LoggerFactory.getLogger(OptiBoxesConfig.class);
 
-    public BooleanConfigField enabled = this.booleanFieldOf("enabled", true);
-    public BooleanConfigField processOptiFine = this.booleanFieldOf("processOptiFine", true);
-    public BooleanConfigField processMCPatcher = this.booleanFieldOf("processMCPatcher", false);
-    public BooleanConfigField renderSunMoon = this.booleanFieldOf("renderSunMoon", true);
-    public BooleanConfigField renderStars = this.booleanFieldOf("renderStars", true);
-    public BooleanConfigField showOverworldForUnknownDimension = this.booleanFieldOf("showOverworldForUnknownDimension", true);
+    public final BooleanConfigField enabled = this.booleanFieldOf("enabled", true);
+    public final BooleanConfigField processOptiFine = this.booleanFieldOf("processOptiFine", true);
+    public final BooleanConfigField processMCPatcher = this.booleanFieldOf("processMCPatcher", false);
+    public final BooleanConfigField renderSunMoon = this.booleanFieldOf("renderSunMoon", true);
+    public final BooleanConfigField renderStars = this.booleanFieldOf("renderStars", true);
+    public final BooleanConfigField showOverworldForUnknownDimension = this.booleanFieldOf("showOverworldForUnknownDimension", true);
 
     public OptiBoxesConfig(Path path) {
         super(path);

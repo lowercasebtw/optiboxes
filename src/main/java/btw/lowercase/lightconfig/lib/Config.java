@@ -2,7 +2,8 @@ package btw.lowercase.lightconfig.lib;
 
 import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
 import btw.lowercase.lightconfig.lib.field.ConfigField;
-import btw.lowercase.lightconfig.lib.field.GenericConfigField;
+import btw.lowercase.lightconfig.lib.field.NumericConfigField;
+import btw.lowercase.lightconfig.lib.field.StringConfigField;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.Strictness;
@@ -26,8 +27,14 @@ public abstract class Config {
         return field;
     }
 
-    public <T> GenericConfigField<T> genericFieldOf(final String name, final T defaultValue) {
-        final GenericConfigField<T> field = new GenericConfigField<>(this, name, defaultValue);
+    public StringConfigField stringFieldOf(final String name, final String defaultValue) {
+        final StringConfigField field = new StringConfigField(this, name, defaultValue);
+        this.configFields.add(field);
+        return field;
+    }
+
+    public <T extends Number> NumericConfigField<T> numericFieldOf(final String name, final T defaultValue) {
+        final NumericConfigField<T> field = new NumericConfigField<>(this, name, defaultValue);
         this.configFields.add(field);
         return field;
     }

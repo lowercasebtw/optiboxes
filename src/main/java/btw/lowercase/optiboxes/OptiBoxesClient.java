@@ -40,7 +40,7 @@ public final class OptiBoxesClient implements ClientModInitializer {
     private static final Pattern MCPATCHER_SKY_PATTERN = Pattern.compile("mcpatcher/sky/" + SKY_PATTERN_ENDING);
 
     private static OptiBoxesConfig CONFIG_INSTANCE;
-    private static final Logger LOGGER = LoggerFactory.getLogger("OptiBoxes");
+    private static final Logger LOGGER = LoggerFactory.getLogger(OptiBoxesClient.class);
 
     public static ResourceLocation id(String path) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);

@@ -4,7 +4,7 @@ import btw.lowercase.lightconfig.lib.Config;
 import com.google.gson.JsonObject;
 
 public class GenericConfigField<T> extends ConfigField<T> {
-    private T value;
+    protected T value;
 
     public GenericConfigField(Config config, String name, T defaultValue) {
         super(config, name, defaultValue);

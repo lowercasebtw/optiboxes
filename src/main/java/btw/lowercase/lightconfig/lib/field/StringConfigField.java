@@ -5,12 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
-public class BooleanConfigField extends ConfigField<Boolean> {
-    private boolean enabled;
-
-    public BooleanConfigField(final Config config, final String name, final Boolean defaultValue) {
+public class StringConfigField extends GenericConfigField<String> {
+    public StringConfigField(final Config config, final String name, final String defaultValue) {
         super(config, name, defaultValue);
-        this.enabled = true;
     }
 
     @Override
@@ -19,30 +16,16 @@ public class BooleanConfigField extends ConfigField<Boolean> {
             throw new Exception("Failed to load value for '" + this.name + "', object didn't contain a value for it.");
         } else {
             JsonElement element = object.get(this.name);
-            if (!element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isBoolean())) {
+            if (!element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isString())) {
                 throw new Exception("Failed to load value for '" + this.name + "', type does not match.");
             } else {
-                this.setEnabled(element.getAsBoolean());
+                this.setValue(element.getAsString());
             }
         }
     }
 
     @Override
     public void save(JsonObject object) {
-        object.addProperty(this.name, this.enabled);
-    }
-
-    public BooleanConfigField toggle() {
-        this.enabled = !this.enabled;
-        return this;
-    }
-
-    public BooleanConfigField setEnabled(boolean enabled) {
-        this.enabled = enabled;
-        return this;
-    }
-
-    public boolean isEnabled() {
-        return this.enabled;
+        object.addProperty(this.name, this.value);
     }
 }
