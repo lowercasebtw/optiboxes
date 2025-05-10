@@ -43,6 +43,8 @@ public abstract class Config {
 
     public abstract void save();
 
+    public abstract void reset();
+
     public List<ConfigField<?>> getConfigFields() {
         return configFields;
     }

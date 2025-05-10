@@ -2,6 +2,8 @@ package btw.lowercase.optiboxes.config;
 
 import btw.lowercase.lightconfig.lib.Config;
 import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
+import btw.lowercase.lightconfig.lib.field.ConfigField;
+import btw.lowercase.lightconfig.lib.field.GenericConfigField;
 import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,5 +74,23 @@ public class OptiBoxesConfig extends Config {
         }
 
         LOGGER.info("Config successfully saved!");
+    }
+
+    @Override
+    public void reset() {
+        // TODO: Figure out a better way to do this
+        for (ConfigField<?> field : this.configFields) {
+            if (field instanceof BooleanConfigField booleanConfigField) {
+                booleanConfigField.setEnabled(booleanConfigField.getDefaultValue());
+            } else if (field instanceof GenericConfigField /* can't use <?> as it errors */ genericConfigField) {
+                genericConfigField.setValue(genericConfigField.getDefaultValue());
+            } else {
+                throw new RuntimeException("Implement resetting config field type " + field.getClass().getName());
+            }
+        }
+
+        // TODO: When implementing the screen system/idk, implement a event listener for like reload resource packs or whatever
+
+        this.save();
     }
 }

@@ -1,8 +1,9 @@
 package btw.lowercase.optiboxes.config;
 
-import btw.lowercase.optiboxes.OptiBoxesClient;
+import btw.lowercase.lightconfig.lib.ConfigTranslate;
 import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
 import btw.lowercase.lightconfig.lib.field.ConfigField;
+import btw.lowercase.optiboxes.OptiBoxesClient;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.StringWidget;
@@ -15,18 +16,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
-import java.util.function.BiFunction;
-
 public class OptiBoxesConfigScreen extends Screen {
-    private static final String PREFIX = "options.optiboxes.";
-    private static final Component TITLE = Component.translatable(PREFIX + "title");
-    private static final BiFunction<Component, Component, Component> TEMPLATE = (a, b) -> Component.translatable(PREFIX + "template", a, b);
-    private static final Component ON = Component.translatable(PREFIX + "on");
-    private static final Component OFF = Component.translatable(PREFIX + "off");
-
-    private static Component tooltip(String translate) {
-        return Component.translatable(translate + ".tooltip");
-    }
+    public static final Component TITLE = Component.translatable("options.optiboxes.title");
 
     private final Screen parent;
     private final OptiBoxesConfig config;
@@ -48,31 +39,39 @@ public class OptiBoxesConfigScreen extends Screen {
         GridLayout gridLayout = new GridLayout();
         gridLayout.defaultCellSetting().paddingHorizontal(4).paddingBottom(4).alignHorizontallyCenter();
         GridLayout.RowHelper rowHelper = gridLayout.createRowHelper(2);
-
-        // Didn't iterate fields here cause I wanted custom order
+        // Didn't iterate fields here because I wanted custom order
         rowHelper.addChild(createConfigButton(config.enabled));
         rowHelper.addChild(createConfigButton(config.showOverworldForUnknownDimension));
         rowHelper.addChild(createConfigButton(config.processOptiFine, () -> this.minecraft.reloadResourcePacks()));
         rowHelper.addChild(createConfigButton(config.processMCPatcher, () -> this.minecraft.reloadResourcePacks()));
         rowHelper.addChild(createConfigButton(config.renderSunMoon));
         rowHelper.addChild(createConfigButton(config.renderStars));
-
         layout.addToContents(gridLayout);
-        layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, (button) -> this.onClose()).width(200).build());
+
+        GridLayout footerGridLayout = new GridLayout();
+        footerGridLayout.defaultCellSetting().paddingHorizontal(4).paddingBottom(4).alignHorizontallyCenter();
+        GridLayout.RowHelper footerRowHelper = footerGridLayout.createRowHelper(2);
+        footerRowHelper.addChild(Button.builder(CommonComponents.GUI_DONE, (button) -> this.onClose()).width(100).build());
+        footerRowHelper.addChild(Button.builder(ConfigTranslate.RESET, (button) -> {
+            config.reset();
+            this.minecraft.reloadResourcePacks();
+        }).width(100).build());
+        layout.addToFooter(footerGridLayout);
+
         layout.visitWidgets(this::addRenderableWidget);
         layout.arrangeElements();
     }
 
     private Button createConfigButton(ConfigField<?> configField, Runnable onClick) {
         if (configField instanceof BooleanConfigField booleanConfigField) {
-            final String translate = PREFIX + configField.getName();
+            final String translate = String.format("options.optiboxes.%s", configField.getName());
             Component name = Component.translatable(translate);
-            Button.Builder builder = Button.builder(TEMPLATE.apply(name, booleanConfigField.isEnabled() ? ON : OFF), (button) -> {
+            Button.Builder builder = Button.builder(ConfigTranslate.TEMPLATE.apply(name, booleanConfigField.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF), (button) -> {
                 booleanConfigField.toggle();
                 onClick.run();
-                button.setMessage(TEMPLATE.apply(name, booleanConfigField.isEnabled() ? ON : OFF));
+                button.setMessage(ConfigTranslate.TEMPLATE.apply(name, booleanConfigField.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF));
             });
-            builder.tooltip(Tooltip.create(tooltip(translate)));
+            builder.tooltip(Tooltip.create(ConfigTranslate.tooltip(translate)));
             return builder.build();
         } else {
             throw new RuntimeException("TODO: Support other config field types when creating a button.");

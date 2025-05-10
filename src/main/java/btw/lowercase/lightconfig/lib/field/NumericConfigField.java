@@ -15,7 +15,7 @@ public class NumericConfigField<T extends Number> extends GenericConfigField<T> 
         if (!object.has(this.name)) {
             throw new Exception("Failed to load value for '" + this.name + "', object didn't contain a value for it.");
         } else {
-            JsonElement element = object.get(this.name);
+            final JsonElement element = object.get(this.name);
             if (!element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isNumber())) {
                 throw new Exception("Failed to load value for '" + this.name + "', type does not match.");
             } else {

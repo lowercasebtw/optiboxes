@@ -1,9 +1,6 @@
 {
 	"options.optiboxes.title": "OptiBoxes Configuration",
 	"options.optiboxes.enabled": "Enabled",
-	"options.optiboxes.template": "%s: %s",
-	"options.optiboxes.on": "ON",
-	"options.optiboxes.off": "OFF",
 	"options.optiboxes.enabled.tooltip": "Enable/disable the custom skybox rendering.",
 	"options.optiboxes.processOptiFine": "Process OptiFine",
 	"options.optiboxes.processOptiFine.tooltip": "If enabled, the mod will attempt to read/load OptiFine Custom Skies.",
@@ -14,5 +11,9 @@
 	"options.optiboxes.renderStars": "Render Stars",
 	"options.optiboxes.renderStars.tooltip": "Enable/disable rendering of the stars.",
 	"options.optiboxes.showOverworldForUnknownDimension": "Show Overworld In Unknown Dimensions",
-	"options.optiboxes.showOverworldForUnknownDimension.tooltip": "Will show the overworld skyboxes in unknown dimensions. Will not show in nether/end though unless a skybox defines it."
+	"options.optiboxes.showOverworldForUnknownDimension.tooltip": "Will show the overworld skyboxes in unknown dimensions. Will not show in nether/end though unless a skybox defines it.",
+	"options.template": "%s: %s",
+	"options.on": "ON",
+	"options.off": "OFF",
+	"options.reset": "Reset"
 }
