@@ -32,11 +32,11 @@ public class GenericConfigField<T> extends ConfigField<T> {
         throw new RuntimeException("Unimplemented createWidget for " + this.getClass().getName());
     }
 
-    public T getValue() {
-        return value;
-    }
-
     public void setValue(T value) {
         this.value = value;
+    }
+
+    public T getValue() {
+        return value;
     }
 }

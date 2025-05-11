@@ -4,10 +4,10 @@ import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
 import btw.lowercase.lightconfig.lib.field.ConfigField;
 import btw.lowercase.lightconfig.lib.field.NumericConfigField;
 import btw.lowercase.lightconfig.lib.field.StringConfigField;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.Strictness;
+import com.google.gson.*;
+import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.client.gui.screens.Screen;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,16 +16,16 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Config {
+public abstract class Config {
     protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().setStrictness(Strictness.STRICT).create();
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
     protected final List<ConfigField<?>> configFields = new ArrayList<>();
-    protected final String modId;
+    protected final ModContainer modContainer;
     protected final Path path;
-    protected final ConfigSerializer<JsonObject> serializer;
+    protected final ConfigSerializer<? extends JsonElement> serializer;
 
-    public Config(String modId, Path path) {
-        this.modId = modId;
+    public Config(ModContainer modContainer, Path path) {
+        this.modContainer = modContainer;
         this.path = path;
         this.serializer = new ConfigSerializer<>();
     }
@@ -54,6 +54,7 @@ public class Config {
             this.save();
             return;
         }
+
 
         try {
             final String json = Files.readString(this.path);
@@ -103,6 +104,8 @@ public class Config {
         this.save();
     }
 
+    public abstract Screen getConfigScreen(@Nullable Screen parent);
+
     public Logger getLogger() {
         return logger;
     }
@@ -111,8 +114,8 @@ public class Config {
         return configFields;
     }
 
-    public String getModId() {
-        return modId;
+    public ModContainer getModContainer() {
+        return this.modContainer;
     }
 
     public Path getPath() {

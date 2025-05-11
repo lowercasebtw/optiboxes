@@ -1,7 +1,6 @@
 package btw.lowercase.optiboxes;
 
 import btw.lowercase.optiboxes.config.OptiBoxesConfig;
-import btw.lowercase.optiboxes.config.OptiBoxesConfigScreen;
 import btw.lowercase.optiboxes.skybox.OptiFineSkybox;
 import btw.lowercase.optiboxes.skybox.SkyboxManager;
 import btw.lowercase.optiboxes.utils.CommonUtils;
@@ -16,6 +15,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
@@ -50,19 +50,32 @@ public final class OptiBoxesClient implements ClientModInitializer {
         return CONFIG_INSTANCE;
     }
 
+    private ModContainer modContainer;
+
     @Override
     public void onInitializeClient() {
         INSTANCE = this;
+        modContainer = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow(() -> new RuntimeException("Mod metadata container was null."));
+
         CONFIG_INSTANCE = new OptiBoxesConfig(FabricLoader.getInstance().getConfigDir().resolve(OptiBoxesClient.MOD_ID + ".json"));
         CONFIG_INSTANCE.load();
+
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SkyboxResourceHelper());
         ClientTickEvents.END_WORLD_TICK.register(SkyboxManager.INSTANCE::tick);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
                 dispatcher.register(ClientCommandManager.literal(MOD_ID).executes((context) -> {
                     Minecraft minecraft = Minecraft.getInstance();
-                    minecraft.schedule(() -> minecraft.setScreen(new OptiBoxesConfigScreen(minecraft.screen, CONFIG_INSTANCE)));
+                    minecraft.schedule(() -> minecraft.setScreen(CONFIG_INSTANCE.getConfigScreen(minecraft.screen)));
                     return Command.SINGLE_SUCCESS;
                 })));
+    }
+
+    public ModContainer getModContainer() {
+        if (modContainer == null) {
+            throw new RuntimeException("Mod metadata container was null when used.");
+        }
+
+        return this.modContainer;
     }
 
     public void convert(SkyboxResourceHelper skyboxResourceHelper) {

@@ -343,7 +343,7 @@ public final class CommonUtils {
     public static boolean getBooleanOr(JsonObject object, String key, boolean defaultValue) {
         final JsonElement element = object.get(key);
         if (element != null) {
-            return !element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isBoolean()) ? defaultValue : element.getAsBoolean();
+            return !element.isJsonPrimitive() || (element instanceof final JsonPrimitive primitive && !primitive.isBoolean()) ? defaultValue : element.getAsBoolean();
         } else {
             return defaultValue;
         }

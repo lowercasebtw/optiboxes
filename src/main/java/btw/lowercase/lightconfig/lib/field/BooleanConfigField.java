@@ -9,12 +9,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 
-public class BooleanConfigField extends ConfigField<Boolean> {
-    private boolean enabled;
-
+public class BooleanConfigField extends GenericConfigField<Boolean> {
     public BooleanConfigField(final Config config, final String name, final boolean defaultValue) {
         super(config, name, defaultValue);
-        this.enabled = true;
     }
 
     @Override
@@ -23,22 +20,17 @@ public class BooleanConfigField extends ConfigField<Boolean> {
             throw new Exception("Failed to load value for '" + this.name + "', object didn't contain a value for it.");
         } else {
             final JsonElement element = object.get(this.name);
-            if (!element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isBoolean())) {
+            if (!element.isJsonPrimitive() || (element instanceof final JsonPrimitive primitive && !primitive.isBoolean())) {
                 throw new Exception("Failed to load value for '" + this.name + "', type does not match.");
             } else {
-                this.setEnabled(element.getAsBoolean());
+                this.setValue(element.getAsBoolean());
             }
         }
     }
 
     @Override
     public void save(JsonObject object) {
-        object.addProperty(this.name, this.enabled);
-    }
-
-    @Override
-    public void restore() {
-        this.setEnabled(this.getDefaultValue());
+        object.addProperty(this.name, this.value);
     }
 
     @Override
@@ -48,26 +40,21 @@ public class BooleanConfigField extends ConfigField<Boolean> {
     }
 
     public Button createWidget(Runnable onClick) {
-        final String translate = String.format("options." + this.config.getModId() + ".%s", this.getName());
-        final Component name = Component.translatable(translate);
-        return Button.builder(ConfigTranslate.TEMPLATE.apply(name, this.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF), (button) -> {
+        final Component translate = this.getTranslate();
+        return Button.builder(ConfigTranslate.TEMPLATE.apply(translate, this.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF), (button) -> {
                     this.toggle();
                     onClick.run();
-                    button.setMessage(ConfigTranslate.TEMPLATE.apply(name, this.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF));
+                    button.setMessage(ConfigTranslate.TEMPLATE.apply(translate, this.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF));
                 })
                 .tooltip(Tooltip.create(ConfigTranslate.tooltip(translate)))
                 .build();
     }
 
     public void toggle() {
-        this.setEnabled(!this.enabled);
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+        this.setValue(!this.value);
     }
 
     public boolean isEnabled() {
-        return this.enabled;
+        return this.value;
     }
 }

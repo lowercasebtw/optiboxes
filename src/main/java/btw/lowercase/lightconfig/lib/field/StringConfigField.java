@@ -16,7 +16,7 @@ public class StringConfigField extends GenericConfigField<String> {
             throw new Exception("Failed to load value for '" + this.name + "', object didn't contain a value for it.");
         } else {
             final JsonElement element = object.get(this.name);
-            if (!element.isJsonPrimitive() || (element instanceof JsonPrimitive primitive && !primitive.isString())) {
+            if (!element.isJsonPrimitive() || (element instanceof final JsonPrimitive primitive && !primitive.isString())) {
                 throw new Exception("Failed to load value for '" + this.name + "', type does not match.");
             } else {
                 this.setValue(element.getAsString());
