@@ -2,6 +2,7 @@ package btw.lowercase.lightconfig.lib.field;
 
 import btw.lowercase.lightconfig.lib.Config;
 import com.google.gson.JsonObject;
+import net.minecraft.client.gui.components.AbstractWidget;
 
 public abstract class ConfigField<T> {
     protected final Config config;
@@ -17,6 +18,10 @@ public abstract class ConfigField<T> {
     public abstract void load(JsonObject object) throws Exception;
 
     public abstract void save(JsonObject object) throws Exception;
+
+    public abstract void restore();
+
+    public abstract AbstractWidget createWidget();
 
     public String getName() {
         return name;

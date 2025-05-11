@@ -65,13 +65,13 @@ public final class OptiBoxesClient implements ClientModInitializer {
                 })));
     }
 
-    public void convert(SkyboxResourceHelper managerAccessor) {
+    public void convert(SkyboxResourceHelper skyboxResourceHelper) {
         if (CONFIG_INSTANCE.processOptiFine.isEnabled()) {
-            this.parseSkyboxes(managerAccessor, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
+            this.parseSkyboxes(skyboxResourceHelper, OPTIFINE_SKY_PARENT, OPTIFINE_SKY_PATTERN);
         }
 
         if (CONFIG_INSTANCE.processMCPatcher.isEnabled()) {
-            this.parseSkyboxes(managerAccessor, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
+            this.parseSkyboxes(skyboxResourceHelper, MCPATCHER_SKY_PARENT, MCPATCHER_SKY_PATTERN);
         }
     }
 
@@ -138,14 +138,14 @@ public final class OptiBoxesClient implements ClientModInitializer {
                 });
 
         if (!overworldLayers.isEmpty()) {
-            JsonObject overworldJson = new JsonObject();
+            final JsonObject overworldJson = new JsonObject();
             overworldJson.add("layers", overworldLayers);
             overworldJson.addProperty("world", "minecraft:overworld");
             SkyboxManager.INSTANCE.addSkybox(OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, overworldJson).getOrThrow().getFirst());
         }
 
         if (!endLayers.isEmpty()) {
-            JsonObject endJson = new JsonObject();
+            final JsonObject endJson = new JsonObject();
             endJson.add("layers", endLayers);
             endJson.addProperty("world", "minecraft:the_end");
             SkyboxManager.INSTANCE.addSkybox(OptiFineSkybox.CODEC.decode(JsonOps.INSTANCE, endJson).getOrThrow().getFirst());
