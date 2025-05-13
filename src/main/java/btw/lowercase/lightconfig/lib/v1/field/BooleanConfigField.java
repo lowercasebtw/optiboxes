@@ -1,6 +1,6 @@
-package btw.lowercase.lightconfig.lib.field;
+package btw.lowercase.lightconfig.lib.v1.field;
 
-import btw.lowercase.lightconfig.lib.Config;
+import btw.lowercase.lightconfig.lib.v1.Config;
 import btw.lowercase.lightconfig.lib.ConfigTranslate;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -39,14 +39,15 @@ public class BooleanConfigField extends GenericConfigField<Boolean> {
         });
     }
 
-    public Button createWidget(Runnable onClick) {
-        final Component translate = this.getTranslate();
-        return Button.builder(ConfigTranslate.TEMPLATE.apply(translate, this.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF), (button) -> {
+    public Button createWidget(final Runnable onClick) {
+        final String translationKey = this.getTranslationKey();
+        final Component translate = Component.translatable(translationKey);
+        return Button.builder(ConfigTranslate.TEMPLATE.apply(translate, ConfigTranslate.toggle(this.isEnabled())), (button) -> {
                     this.toggle();
                     onClick.run();
-                    button.setMessage(ConfigTranslate.TEMPLATE.apply(translate, this.isEnabled() ? ConfigTranslate.ON : ConfigTranslate.OFF));
+                    button.setMessage(ConfigTranslate.TEMPLATE.apply(translate, ConfigTranslate.toggle(this.isEnabled())));
                 })
-                .tooltip(Tooltip.create(ConfigTranslate.tooltip(translate)))
+                .tooltip(Tooltip.create(ConfigTranslate.tooltip(translationKey)))
                 .build();
     }
 

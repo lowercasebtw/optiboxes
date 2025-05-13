@@ -1,10 +1,10 @@
-package btw.lowercase.lightconfig.lib.field;
+package btw.lowercase.lightconfig.lib.v1.field;
 
-import btw.lowercase.lightconfig.lib.Config;
+import btw.lowercase.lightconfig.lib.v1.Config;
 import com.google.gson.JsonObject;
 import net.minecraft.client.gui.components.AbstractWidget;
 
-public class GenericConfigField<T> extends ConfigField<T> {
+public class GenericConfigField<T> extends AbstractConfigField<T> {
     protected T value;
 
     public GenericConfigField(Config config, String name, T defaultValue) {

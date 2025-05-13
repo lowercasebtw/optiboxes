@@ -1,7 +1,7 @@
 package btw.lowercase.optiboxes.config;
 
-import btw.lowercase.lightconfig.lib.Config;
-import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
+import btw.lowercase.lightconfig.lib.v1.Config;
+import btw.lowercase.lightconfig.lib.v1.field.BooleanConfigField;
 import btw.lowercase.optiboxes.OptiBoxesClient;
 import net.minecraft.client.gui.screens.Screen;
 

@@ -38,9 +38,9 @@ public class SkyboxResourceHelper implements IdentifiableResourceReloadListener 
         return this.resourceManager.listResources(parent, path -> true).keySet().stream();
     }
 
-    public InputStream getInputStream(ResourceLocation resourceLocation) {
+    public final InputStream getInputStream(ResourceLocation resourceLocation) {
         try {
-            Resource resource = this.resourceManager.getResource(resourceLocation).orElse(null);
+            final Resource resource = this.resourceManager.getResource(resourceLocation).orElse(null);
             return resource == null ? null : resource.open();
         } catch (IOException e) {
             return null;

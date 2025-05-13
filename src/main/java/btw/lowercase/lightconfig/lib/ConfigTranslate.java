@@ -1,8 +1,6 @@
 package btw.lowercase.lightconfig.lib;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentContents;
-import net.minecraft.network.chat.contents.TranslatableContents;
 
 import java.util.function.BiFunction;
 
@@ -19,12 +17,7 @@ public final class ConfigTranslate {
         return Component.translatable(translate + ".tooltip");
     }
 
-    public static Component tooltip(final Component translate) {
-        final ComponentContents componentContents = translate.getContents();
-        if (componentContents instanceof final TranslatableContents translatableContents) {
-            return tooltip(translatableContents.getKey());
-        } else {
-            throw new RuntimeException("Expected translatable component, got something else.");
-        }
+    public static Component toggle(final boolean value) {
+        return value ? ON : OFF;
     }
 }

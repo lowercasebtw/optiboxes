@@ -1,9 +1,9 @@
-package btw.lowercase.lightconfig.lib;
+package btw.lowercase.lightconfig.lib.v1;
 
-import btw.lowercase.lightconfig.lib.field.BooleanConfigField;
-import btw.lowercase.lightconfig.lib.field.ConfigField;
-import btw.lowercase.lightconfig.lib.field.NumericConfigField;
-import btw.lowercase.lightconfig.lib.field.StringConfigField;
+import btw.lowercase.lightconfig.lib.v1.field.AbstractConfigField;
+import btw.lowercase.lightconfig.lib.v1.field.BooleanConfigField;
+import btw.lowercase.lightconfig.lib.v1.field.NumericConfigField;
+import btw.lowercase.lightconfig.lib.v1.field.StringConfigField;
 import com.google.gson.*;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.gui.screens.Screen;
@@ -19,7 +19,7 @@ import java.util.List;
 public abstract class Config {
     protected static final Gson GSON = new GsonBuilder().setPrettyPrinting().setStrictness(Strictness.STRICT).create();
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
-    protected final List<ConfigField<?>> configFields = new ArrayList<>();
+    protected final List<AbstractConfigField<?>> configFields = new ArrayList<>();
     protected final ModContainer modContainer;
     protected final Path path;
     protected final ConfigSerializer<? extends JsonElement> serializer;
@@ -100,7 +100,7 @@ public abstract class Config {
 
     public void reset() {
         // TODO: When implementing the screen system/idk, implement a event listener for like reload resource packs or whatever
-        this.configFields.forEach(ConfigField::restore);
+        this.configFields.forEach(AbstractConfigField::restore);
         this.save();
     }
 
@@ -110,7 +110,7 @@ public abstract class Config {
         return logger;
     }
 
-    public List<ConfigField<?>> getConfigFields() {
+    public List<AbstractConfigField<?>> getConfigFields() {
         return configFields;
     }
 

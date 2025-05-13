@@ -1,6 +1,6 @@
-package btw.lowercase.lightconfig.lib.field;
+package btw.lowercase.lightconfig.lib.v1.field;
 
-import btw.lowercase.lightconfig.lib.Config;
+import btw.lowercase.lightconfig.lib.v1.Config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;

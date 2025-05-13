@@ -37,14 +37,14 @@ public record OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, 
     ).apply(instance, OptiFineSkyLayer::new));
 
     public boolean getConditionCheck(Level level) {
-        Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
+        final Entity cameraEntity = Minecraft.getInstance().getCameraEntity();
         if (cameraEntity == null) {
             return false;
         }
 
-        BlockPos entityPos = cameraEntity.getOnPos();
+        final BlockPos entityPos = cameraEntity.getOnPos();
         if (!this.biomes.isEmpty()) {
-            Holder<Biome> currentBiome = level.getBiome(entityPos);
+            final Holder<Biome> currentBiome = level.getBiome(entityPos);
             if (!currentBiome.isBound()) {
                 return false;
             }
@@ -63,8 +63,7 @@ public record OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, 
         }
 
         if (conditionAlpha == -1.0F) {
-            boolean conditionCheck = this.getConditionCheck(level);
-            return conditionCheck ? 1.0F : 0.0F;
+            return this.getConditionCheck(level) ? 1.0F : 0.0F;
         }
 
         return CommonUtils.calculateConditionAlphaValue(1.0F, 0.0F, conditionAlpha, (int) (this.transition() * 20), this.getConditionCheck(level));
@@ -79,8 +78,8 @@ public record OptiFineSkyLayer(ResourceLocation source, boolean biomeInclusion, 
                 adjustedTime += 24000L * (int) this.loop.days();
             }
 
-            int daysPassed = (int) (adjustedTime / 24000L);
-            int currentDay = daysPassed % (int) this.loop.days();
+            final int daysPassed = (int) (adjustedTime / 24000L);
+            final int currentDay = daysPassed % (int) this.loop.days();
             return CommonUtils.checkRanges(currentDay, this.loop.ranges());
         } else {
             return true;
