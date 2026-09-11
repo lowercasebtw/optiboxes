@@ -27,9 +27,11 @@ import btw.lowercase.skyboxify.skybox.SkyPart;
 import btw.lowercase.skyboxify.skybox.impl.components.UV;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 
-//? >=26.2 {
-import com.mojang.blaze3d.PrimitiveTopology;
-//? } else {
+//? >=26.3 {
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+//? } else >=26.2 {
+/*import com.mojang.blaze3d.PrimitiveTopology;
+*///? } else {
 /*import com.mojang.blaze3d.vertex.VertexFormat;
  *///? }
 

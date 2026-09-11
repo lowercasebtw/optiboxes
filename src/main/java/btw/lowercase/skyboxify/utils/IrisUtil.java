@@ -27,7 +27,12 @@ import lombok.experimental.UtilityClass;
 
 //? >=1.21.6 {
 import btw.lowercase.skyboxify.api.SkyboxifyImpl;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+
+//? >=26.3 {
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+//? } else {
+/*import com.mojang.blaze3d.pipeline.RenderPipeline;
+*///? }
 
 import java.lang.reflect.Method;
 import java.util.Arrays;

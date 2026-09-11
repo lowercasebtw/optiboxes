@@ -30,10 +30,10 @@ import java.util.*;
 
 //? >=1.21.6 {
 //? >=26.3 {
-/*import com.mojang.renderpearl.api.pipeline.RenderPipeline;
-*///? } else {
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-//? }
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+//? } else {
+/*import com.mojang.blaze3d.pipeline.RenderPipeline;
+*///? }
 //? } else {
 /*import btw.lowercase.skyboxify.utils.BlendFunction;
 *///? }

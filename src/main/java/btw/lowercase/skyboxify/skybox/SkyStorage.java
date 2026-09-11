@@ -31,10 +31,10 @@ import com.mojang.blaze3d.vertex.*;
 //? <=26.1
 //import btw.lowercase.skyboxify.mixins.RenderPipelinesAccessor;
 //? >=26.3 {
-/*import com.mojang.renderpearl.api.pipeline.RenderPipeline;
-*///? } else {
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-//? }
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+//? } else {
+/*import com.mojang.blaze3d.pipeline.RenderPipeline;
+*///? }
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.Map;
@@ -57,16 +57,20 @@ public final class SkyStorage {
             builder.withFragmentShader(SkyboxResourceHelper.CUSTOM_SKYBOX_LOCATION);
 
             //? >=26.1 {
-            final int writeColor = com.mojang.blaze3d.pipeline.ColorTargetState.WRITE_COLOR;
-            final com.mojang.blaze3d.pipeline.BlendFunction vanillaBlendFunction = blendFunction == null ? null : blendFunction.vanilla();
-            builder.withColorTargetState(new com.mojang.blaze3d.pipeline.ColorTargetState(
+            //~ if >=26.3 'com.mojang.blaze3d.pipeline' -> 'com.mojang.renderpearl.api.pipeline' {
+            final int writeColor = com.mojang.renderpearl.api.pipeline.ColorTargetState.WRITE_COLOR;
+            final com.mojang.renderpearl.api.pipeline.BlendFunction vanillaBlendFunction = blendFunction == null ? null : blendFunction.vanilla();
+            builder.withColorTargetState(new com.mojang.renderpearl.api.pipeline.ColorTargetState(
                     java.util.Optional.ofNullable(vanillaBlendFunction),
                     //? >=26.2 {
-                    com.mojang.blaze3d.GpuFormat.RGBA8_UNORM, writeColor
+                    //~ if >=26.3 'com.mojang.blaze3d.GpuFormat' -> 'com.mojang.renderpearl.api.GpuFormat' {
+                    com.mojang.renderpearl.api.GpuFormat.RGBA8_UNORM, writeColor
+                    //? }
                     //? } else {
                     /*writeColor
                     *///? }
             ));
+            //? }
             //? } else {
             /*builder.withDepthWrite(false);
             builder.withColorWrite(true, false);
@@ -77,11 +81,11 @@ public final class SkyStorage {
 
             //? >=26.2 {
             //? >=26.3 {
-            /*builder.withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.DYNAMIC_TRANSFORMS);
+            builder.withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.DYNAMIC_TRANSFORMS);
             builder.withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.PROJECTION);
-            *///? } else {
-            builder.withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.MATRICES_PROJECTION);
-            //? }
+            //? } else {
+            /*builder.withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.MATRICES_PROJECTION);
+            *///? }
             builder.withBindGroupLayout(net.minecraft.client.renderer.BindGroupLayouts.SAMPLER0);
             //? } else {
             /*builder.withSampler("Sampler0");
@@ -89,7 +93,9 @@ public final class SkyStorage {
 
             //? >=26.2 {
             builder.withVertexBinding(0, DefaultVertexFormat.POSITION_TEX);
-            builder.withPrimitiveTopology(com.mojang.blaze3d.PrimitiveTopology.QUADS);
+            //~ if >=26.3 'com.mojang.blaze3d.PrimitiveTopology' -> 'com.mojang.renderpearl.api.pipeline.PrimitiveTopology' {
+            builder.withPrimitiveTopology(com.mojang.renderpearl.api.pipeline.PrimitiveTopology.QUADS);
+            //? }
             //? } else {
             /*builder.withVertexFormat(DefaultVertexFormat.POSITION_TEX, VertexFormat.Mode.QUADS);
             *///? }

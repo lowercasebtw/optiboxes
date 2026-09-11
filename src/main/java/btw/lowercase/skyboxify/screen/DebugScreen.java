@@ -24,10 +24,10 @@
 package btw.lowercase.skyboxify.screen;
 
 import btw.lowercase.skyboxify.screen.widget.Gidget;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,7 +98,7 @@ public class DebugScreen extends Screen {
 	}
 
 	private boolean keyPressedInternal(final int keyCode, final int scanCode, final int modifiers) {
-		if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+		if (keyCode == InputConstants.KEY_ESCAPE) {
 			this.minecraft.gui.setScreen(null);
 			return true;
 		}
@@ -115,7 +115,9 @@ public class DebugScreen extends Screen {
 	//? >=1.21.9 {
 	@Override
 	public boolean keyPressed(final net.minecraft.client.input.KeyEvent event) {
-		return this.keyPressedInternal(event.key(), event.scancode(), event.modifiers());
+        //~ if >=26.3 'scancode' -> 'keycode' {
+        return this.keyPressedInternal(event.key(), event.keycode(), event.modifiers());
+        //? }
 	}
 	//?} else {
     /*@Override
@@ -137,7 +139,9 @@ public class DebugScreen extends Screen {
 	//? >=1.21.9 {
 	@Override
 	public boolean keyReleased(final net.minecraft.client.input.KeyEvent event) {
-		return this.keyReleasedInternal(event.key(), event.scancode(), event.modifiers());
+        //~ if >=26.3 'scancode' -> 'keycode' {
+		return this.keyReleasedInternal(event.key(), event.keycode(), event.modifiers());
+        //? }
 	}
 	//?} else {
     /*@Override

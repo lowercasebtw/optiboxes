@@ -23,9 +23,11 @@
 
 package btw.lowercase.skyboxify.utils;
 
-//? >=26.2 {
-import com.mojang.blaze3d.platform.BlendFactor;
-//? } else >=1.21.6 {
+//? >=26.3 {
+import com.mojang.renderpearl.api.pipeline.BlendFactor;
+//? } else >=26.2 {
+/*import com.mojang.blaze3d.platform.BlendFactor;
+*///? } else >=1.21.6 {
 /*import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.platform.DestFactor;
 *///? } else {
@@ -75,8 +77,10 @@ public record BlendFunction(SrcFactor srcFactor, DstFactor dstFactor) {
     }
 
     //? >=1.21.6 {
-    public com.mojang.blaze3d.pipeline.BlendFunction vanilla() {
-        return new com.mojang.blaze3d.pipeline.BlendFunction(this.srcFactor.vanilla(), this.dstFactor.vanilla());
+    //~ if >=26.3 'com.mojang.blaze3d.pipeline.BlendFunction' -> 'com.mojang.renderpearl.api.pipeline.BlendFunction' {
+    public com.mojang.renderpearl.api.pipeline.BlendFunction vanilla() {
+        return new com.mojang.renderpearl.api.pipeline.BlendFunction(this.srcFactor.vanilla(), this.dstFactor.vanilla());
     }
+    //? }
     //?}
 }

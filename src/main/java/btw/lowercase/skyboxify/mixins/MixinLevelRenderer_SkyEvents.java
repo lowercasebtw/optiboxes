@@ -56,10 +56,10 @@ import net.minecraft.world.level.dimension.DimensionType;
 
 //? >=1.21.6 {
 //? >=26.3 {
-/*import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-*///? } else {
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
-//? }
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+//? } else {
+/*import com.mojang.blaze3d.buffers.GpuBufferSlice;
+*///? }
 //? }
 
 @Mixin(value = LevelRenderer.class, priority = 900)
